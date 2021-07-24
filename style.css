@@ -1,0 +1,48 @@
+ .links line {
+      stroke: #999;
+      stroke-opacity: 0.6;
+    }
+
+    .link {
+      stroke: #999;
+      stroke-width: 1px;
+    }
+
+    .sidebar {
+    height: 100%;
+    width: 200px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding-top: 40px;
+    padding-left: 5px;
+    background-color: lightblue;
+    border-right: 6px solid skyblue;
+    border-top: 6px solid skyblue;
+    border-left: 6px solid skyblue;
+    }
+
+    .sidebar div {
+    padding: 8px;
+    font-size: 15px;
+    display: block;
+    }
+
+    .body-text {
+    margin-left: 200px;
+    font-size: 18px;
+    }
+
+    html,
+    body {
+      height: 100%;
+      width: 100%;
+    }
+
+    .container {
+      align-items: center;
+      display: flex;
+      justify-content: center;
+      height: 100%;
+      width: 100%;
+    }
