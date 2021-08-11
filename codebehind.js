@@ -365,6 +365,7 @@ function metodo2(charge, coeffNodi) {
       }).entries(nodiDaVedere);
 
 
+
       //visualizza le catenelle attendendo 1 secondo
       visualizeNodes = setTimeout(function () {
 
@@ -1180,6 +1181,7 @@ window.onload = function() {
 
 
   var intervalId = setInterval(function() {
+
     if(graph1==null)
       graph1=copyJson[0];
 
@@ -1209,5 +1211,4 @@ window.onload = function() {
 
   }, 1000);
 };
-
 
