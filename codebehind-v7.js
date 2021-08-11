@@ -1008,8 +1008,8 @@ function distanzaCentro(x2, y2, x1, y1) {
 }
 
 //funzione di supporto all'inizio del drag 
-function dragstarted(d) {
-    if (!d3.event.active)
+function dragstarted(event, d) {
+    if (!event.active)
         simulation.alphaTarget(0.3).restart();
 
     d.fx = d.x;
@@ -1017,14 +1017,14 @@ function dragstarted(d) {
 }
 
 //funzione di supporto durante il drag 
-function dragged(d) {
-    d.fx = d3.event.x;
-    d.fy = d3.event.y;
+function dragged(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
 }
 
 //funzione di supporto alla fine del drag
-function dragended(d) {
-    if (!d3.event.active) simulation.alphaTarget(0);
+function dragended(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
     d.fx = null;
     d.fy = null;
 }
