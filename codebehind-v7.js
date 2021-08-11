@@ -289,6 +289,7 @@ function metodo2(charge, coeffNodi) {
         var nodiDaVedere = [...graph.nodes];
         var linkDaVedere = [...graph.links];
 
+        console.log(graph.nodes)
         console.log(nodiDaVedere)
 
 
