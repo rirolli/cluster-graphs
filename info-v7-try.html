@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="style.css">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="codebehind-v7-try.js"></script>
+  <script type="text/javascript" src="data.json"></script>
+</head>
+
+<body>
+  <div id="simulazione" style="display:none">
+    <div class="sidebar" >
+
+        <form id="grafo">  
+        <label><b>Select graph</b><br></label>  
+        <select onchange="selectGraph(this)">  
+          <option value="1"> graph 1 </option>  
+          <option value="2"> graph 2</option>  
+          <option value="3"> graph 3</option>  
+        </select>  
+        </form>
+
+        <br>
+
+        <form id="Metodo">  
+        <label><b>Select method</b><br></label>  
+        <select  onchange="selectMethod(this)" id="method">  
+          <option value="1"> method 1 </option>  
+          <option value="2"> method 2</option>  
+          <option value="3"> method 3</option>  
+        </select>  
+        </form>  
+
+        <br>
+
+        Specific command for method
+
+
+        <div id="comandi1">
+          <b>collision</b><br><input id="collision" step="1" type="range" min="0" max="50" value="20" /><br><b>distance invisible node</b><br><input id="distance" step="1" type="range" min="0" max="1000" value="600" /><br><input type="checkbox" onclick="hideOrShowInvisibleNode(this)"><label> Hide invisible node</label><br>
+        </div>
+
+        <div id="comandi2" style="display: none;">
+          <b>charge</b><br><input id="charge" step="1" type="range" min="-200" max="50" value="-100" /><br><b>number of nodes</b><br><input id="coeffNodi" step="0.1" type="range" min="0.5" max="1.5" value="1" />
+        </div>
+
+        <div id="comandi3" style="display: none;">
+          <b>radius</b><br><input id="raggio" step="1" type="range" min="0" max="10" value="' + raggio + '" />
+        </div>
+    </div>
+
+    <div id="contenitore" class="body-text">
+        <svg></svg>
+    </div>
+
+  </div>
+
+  <div class="container" align="center" id="loading"> 
+    <p id="loadingText">loading</p>
+  </div>
+</body>

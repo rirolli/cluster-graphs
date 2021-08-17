@@ -304,39 +304,29 @@ function metodo2(charge, coeffNodi) {
             .force("link", d3.forceLink().distance(200).strength(.6).id(function (d) {
                 return d.name;
             }).distance(function (d) {
-                if (d.source.name.includes("invisibile") && d.target.name.includes("invisibile")) {
-                    return -50;
-                }
+                if (d.source.name.includes("invisibile") && d.target.name.includes("invisibile")) { return -50; }
                 else {
                     if ((d.source.name.includes("invisibile") || d.target.name.includes("invisibile")) && d.source.group == d.target.group) {
                         return 20;
                     } else {
-                        if (d.source.group == d.target.group) {
-                            return 0;
-                        }
-                        else {
+                        if (d.source.group == d.target.group) { return 0; } else {
                             return 0;
                         }
                     }
                 }
-            }).strength(function (d) {
-                if (d.source.name.includes("invisibile") && d.target.name.includes("invisibile")) {
-                    return 1;
-                }
-                else {
-                    if ((d.source.name.includes("invisibile") || d.target.name.includes("invisibile")) && d.source.group == d.target.group) {
-                        return 0;
-                    }
+            })
+                .strength(function (d) {
+                    if (d.source.name.includes("invisibile") && d.target.name.includes("invisibile")) { return 1; }
                     else {
-                        if (d.source.group == d.target.group) {
-                            return 0
-                        }
-                        else {
+                        if ((d.source.name.includes("invisibile") || d.target.name.includes("invisibile")) && d.source.group == d.target.group) {
                             return 0;
+                        } else {
+                            if (d.source.group == d.target.group) { return 0 } else {
+                                return 0;
+                            }
                         }
                     }
-                }
-            }))
+                }))
             .force("charge", chargeForce)
             .force("x", d3.forceX(width / 2))
             .force("y", d3.forceY(height / 2))
@@ -373,7 +363,7 @@ function metodo2(charge, coeffNodi) {
 
         //groups è una lista di liste
         //ogni lista raggruppa nodi dello stesso cluster ( [[nodox cluster 1, nodoy cluster 1, .... ], [nodox cluster 2, nodoy cluster 2, ....], [...]] )
-        var groups = Array.from(d3.group(nodiDaVedere, d => d.group), ([key, values]) => ({ key, values }))
+        var groups = Array.from(d3.group(nodiDaVedere, d => d.group), ([key,values]) => ({key,values}))
 
         //visualizza le catenelle attendendo 1 secondo
         visualizeNodes = setTimeout(function () {
@@ -731,7 +721,7 @@ function metodo3(raggio) {
 
         //groups è una lista di liste
         //ogni lista raggruppa nodi dello stesso cluster ( [[nodox cluster 1, nodoy cluster 1, .... ], [nodox cluster 2, nodoy cluster 2, ....], [...]] )
-        var groups = Array.from(d3.group(nodiDaVedere, d => d.group), ([key, values]) => ({ key, values }))
+        var groups = Array.from(d3.group(nodiDaVedere, d => d.group), ([key,values]) => ({key,values}))
 
 
         const invisibleNode = [];
