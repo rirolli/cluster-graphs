@@ -34,6 +34,9 @@ function metodo1() {
     var nodiDaVedere = [...graph.nodes];
     var linkDaVedere = [...graph.links];
 
+    console.log(nodiDaVedere)
+    console.log(linkDaVedere)
+
     //crea lista contenente i nomi dei cluster senza ripetizioni (es [1,2,3,4...])
     var unique_cluster_name = [];
     nodiDaVedere.forEach(function (nodo) {
@@ -293,10 +296,27 @@ function metodo2(charge, coeffNodi) {
 
         var nodiDaVedere = [...graph.nodes];
         var linkDaVedere = [...graph.links];
+        // var linkDaVedere = [];
+
+        // console.log(graph.nodes)
+
+        // graph.links.forEach(function (d) {
+        //     let sourceNode = nodiDaVedere.filter(obj => { return obj.name == d.source});
+        //     let targetNode = nodiDaVedere.filter(obj => { return obj.name == d.target});
+        //     console.log(sourceNode)
+        //     linkDaVedere.push(...[{source: sourceNode[0], target: targetNode[0], value: d.value}]);
+
+        // });
+
+        // var nodiDaVedere = graph.nodes;
+        // var linkDaVedere = graph.links;
+
+        console.log(nodiDaVedere)
+        console.log(graph.links)
 
         var groups = Array.from(d3.group(nodiDaVedere, d => d.group), ([key, values]) => ({ key, values }))
 
-        console.log(groups)
+        console.log(linkDaVedere)
 
         var unique_cluster_name = [];
         nodiDaVedere.forEach(function (nodo) {
@@ -308,86 +328,200 @@ function metodo2(charge, coeffNodi) {
 
         var colori_array = getArrayColori(unique_cluster_name.length)
 
-        var catenella = { "nodes": [], "links": [] };
-
         unique_cluster_name.forEach(function (d) {
 
             // trovo il gruppo corrispondente all'indice corrente
             let group = groups.filter(obj => { return obj.key == d });
 
-            // decido il numero di nodii per creare la catenella per questo gruppo
+            // creo il nodo fittizio centro del cluster
+            invisibleNode = createNode('center' + String(d), 100, height, width);
+            nodiDaVedere.push(...[invisibleNode]);
+
+            // collego il nodo fittizio a tutti i nodi del cluster
+            group[0].values.forEach(function (nodo) {
+                linkDaVedere.push(...[{ source: invisibleNode, target: nodo, value: 15 }])
+            });
+
+            // decido il numero di nodi per creare la catenella per questo gruppo
             var nNodiGroupCluster = decisiNumeroNodiInvisibili(group.values.length, coeffNodi);
 
             // creo i nodi e i link
             for (i = 0; i < nNodiGroupCluster; i++) {
                 // creo il nodo della catenella
-                let catenellaNode = createNode('catenella' + String(i), d, height, width);
-                catenella.nodes.push(catenellaNode);
+                let catenellaNode = createNode(String(d) + 'catenella' + String(i), 100, height, width);
+                nodiDaVedere.push(...[catenellaNode])
 
-                // creo i link per il nodo della catenella
+                // collego i nodi della catenina ai nodi invisibili
+                linkDaVedere.push(...[{ source: catenellaNode, target: invisibleNode, value: 8 }])  // catenella -> centro
+
+                // collego il nodo corrente della catena al precedente
+                if (i > 0) {
+                    let s = nodiDaVedere.filter(obj => { return obj.name == String(d) + 'catenella' + String(i - 1) })[0];
+
+                    console.log({ source: s, target: catenellaNode, value: 8 })
+                    linkDaVedere.push(...[{ source: s, target: catenellaNode, value: 8 }]);
+
+                    if (i == (nNodiGroupCluster - 1)) {    // se ultimo nodo allora chiudo la catena
+                        let t = nodiDaVedere.filter(obj => { return obj.name == String(d) + 'catenella' + String(0) })[0];
+                        console.log({ source: catenellaNode, target: t, value: 8 })
+                        linkDaVedere.push(...[{ source: catenellaNode, target: t, value: 8 }]);
+                    }
+                }
+
+                // collego il nodo della catena a tutti i nodi del cluster
                 group[0].values.forEach(function (nodo) {
-                    catenellaLink = {"source": 'catenella' + String(i), "target": nodo.name, "value": 8};
-                    catenella.links.push(catenellaLink);
+                    linkDaVedere.push(...[{ source: catenellaNode, target: nodo, value: 0 }])   // da nodo della catena a nodi del cluster
                 });
+
             }
-            // creo i link per unire tra loro i nodi della catenella
-            // TO-DO
         });
-
-        console.log(catenella)
-        // aggiungo i nodi delle catenelle appena create alla lista dei nodi da vedere
-        nodiDaVedere = nodiDaVedere.concat(catenella.nodes);
-        linkDaVedere = linkDaVedere.concat(catenella.links);
-
-        var simulation = d3.forceSimulation(nodiDaVedere)
-            .force("link", d3.forceLink().links(linkDaVedere).id(d => d.id))
-            .force("charge", d3.forceManyBody().strength(charge))
-            .force("collide", d3.forceCollide().radius(d => d.r + 1))
-            .force("center", d3.forceCenter(width / 2, height / 2));
-
-        var link = svg.append("g")
-            .attr("stroke", "#999")
-            .attr("stroke-opacity", 0.6)
-            .selectAll("line")
-            .attr('class', 'link')
-            .data(linkDaVedere)
-            .join("line")
-            .attr("stroke-width", d => Math.sqrt(d.value));
-
-        var node = svg.append("g")
-            .attr("stroke", "black")
-            .attr("stroke-width", 1.5)
-            .selectAll("circle")
-            .data(nodiDaVedere)
-            .join("circle")
-            .attr("fill", function (nodo) {
-                if (nodo.name == 'catenella')
-                    return 'miao';
-                else
-                    return colori_array[Number(nodo.group) - 1];
-            })
-            .attr("r", 8)
-            .call(drag(simulation));
-
-        node.exit().remove();
-
-
-        simulation.on("tick", () => {
-            link
-                .attr("x1", d => d.source.x)
-                .attr("y1", d => d.source.y)
-                .attr("x2", d => d.target.x)
-                .attr("y2", d => d.target.y);
-
-            node
-                .attr("cx", d => d.x)
-                .attr("cy", d => d.y);
-        });
-
         console.log(nodiDaVedere)
         console.log(linkDaVedere)
 
-        simulation.restart();
+        start()
+
+        function start() {
+            var simulation = d3.forceSimulation(nodiDaVedere)
+                .force("link", d3.forceLink().links(linkDaVedere).id(d => d.id)
+                    .strength(function (d) {
+                        if (d.source.name.includes('catenella') && d.target.name.includes('catenella')) {   // forza tra catenelle
+                            return .5;
+                        }
+                        else {
+                            if (d.source.name.includes('catenella') && d.target.name.includes('center')) {      // forza tra catenella e centro
+                                return .1;
+                            }
+                            else {
+                                if (d.source.name.includes('center') || d.target.name.includes('center')) {     // forza tra nodi reali e centro
+                                    return 1.5;
+                                }
+                                else {
+                                    if (d.source.name.includes('catenella') || d.target.name.includes('catenella')) { // forza tra catenella e nodi qualsiasi
+                                        return .1;
+                                    }
+                                    else {                                                                            // forza tra nodi normali
+                                        return .1;
+                                    }
+                                }
+
+                            }
+                        }
+                    })
+                    .distance((function (d) {
+                        if (d.source.name.includes('catenella') && d.target.name.includes('catenella')) {   // forza tra catenelle
+                            return 10;
+                        }
+                        else {
+                            if (d.source.name.includes('catenella') && d.target.name.includes('center')) {      // forza tra catenella e centro
+                                return 60;
+                            }
+                            else {
+                                if (d.source.name.includes('center') || d.target.name.includes('center')) {     // forza tra nodi reali e centro
+                                    return 25;
+                                }
+                                else {
+                                    if (d.source.name.includes('catenella') || d.target.name.includes('catenella')) { // forza tra catenella e nodi qualsiasi
+                                        return 40;
+                                    }
+                                    else {                                                                          // forza tra nodi normali
+                                        return 40;
+                                    }
+                                }
+
+                            }
+                        }
+                    })
+                    )
+                )
+                .force("charge", d3.forceManyBody())
+                .force("collide", d3.forceCollide().radius(d => d.r + 1))
+                .force("center", d3.forceCenter(width / 2, height / 2));
+
+            var link = svg.append("g")
+                .attr("stroke", "#999")
+                .selectAll("line")
+                .attr('class', 'link')
+                .data(linkDaVedere)
+                .join("line")
+                .attr("stroke-opacity", function (d) {
+                    if (d.source.name.includes('catenella') && d.target.name.includes('catenella')) {   // link tra nodi di una catena
+                        return 1;
+                    }
+                    else {
+                        if (d.source.name.includes("catenella") || d.target.name.includes("catenella")) {   // link tra catena e nodi
+                            return 0;
+                        }
+                        else {
+                            return 0.6;
+                        }
+                    }
+                })
+                .attr("stroke-width", d => Math.sqrt(d.value));
+
+            // var link = svg.selectAll(".link")
+            //     .data(linkDaVedere);
+
+            // link.enter()
+            //     .insert("line", ".node")
+            //     .attr("stroke", "#999")
+            //     .attr("stroke-opacity", 0.6)
+            //     .attr('class', 'link')
+            //     .attr("stroke-width", d => Math.sqrt(d.value));
+
+            link.exit().remove();
+
+            var node = svg.append("g")
+                .attr("stroke", "black")
+                .attr("stroke-width", 1.5)
+                .selectAll("circle")
+                .data(nodiDaVedere)
+                .join("circle")
+                .attr("id", d => d.name)
+                .attr("fill", function (nodo) {
+                    if (nodo.name.includes('catenella'))
+                        return 'black';
+                    if (nodo.name.includes('center'))
+                        return 'red';
+                    else
+                        return colori_array[Number(nodo.group) - 1];
+                })
+                .attr("r", 8)
+                .call(drag(simulation));
+
+            // var node = svg.selectAll(".node")
+            //     .data(nodiDaVedere);
+
+            // node.enter()
+            //     .append("circle")
+            //     .attr("class", "node")
+            //     .attr("stroke", "black")
+            //     .attr("stroke-width", 1.5)
+            //     .attr("fill", function (nodo) {
+            //         if (nodo.name == 'catenella')
+            //             return 'miao';
+            //         else
+            //             return colori_array[Number(nodo.group) - 1];
+            //     })
+            //     .attr("r", 8)
+            //     .call(drag(simulation));
+
+            node.exit().remove();
+
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => Math.max(50, Math.min(width - 50, d.source.x)))
+                    .attr("y1", d => Math.max(50, Math.min(height - 50, d.source.y)))
+                    .attr("x2", d => Math.max(50, Math.min(width - 50, d.target.x)))
+                    .attr("y2", d => Math.max(50, Math.min(height - 50, d.target.y)));
+
+                node
+                    .attr("cx", d => Math.max(50, Math.min(width - 50, d.x)))
+                    .attr("cy", d => Math.max(50, Math.min(height - 50, d.y)));
+            });
+
+            simulation.restart();
+        }
     }
 
     // #############
@@ -957,8 +1091,9 @@ window.onload = function () {
             graph3['nodes'] = copyJson[2].nodes;
             graph3['links'] = copyJson[2].links;
 
+
             graph = { ...graph1 };
         }
-
     }, 1000);
+
 };
