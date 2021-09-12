@@ -355,33 +355,31 @@ function metodo2(charge, coeffNodi) {
         ######################### 
         */
 
-        showCenter = setTimeout(function () {
-            // creo una lista dei cluster presenti nel nostro dataset
-            var uniqueClusterName = [];
-            nodiDaVedere.forEach(function (nodo) {
-                if (!uniqueClusterName.includes(nodo.group))
-                    uniqueClusterName.push(nodo.group);
-            });
+        // creo una lista dei cluster presenti nel nostro dataset
+        var uniqueClusterName = [];
+        nodiDaVedere.forEach(function (nodo) {
+            if (!uniqueClusterName.includes(nodo.group))
+                uniqueClusterName.push(nodo.group);
+        });
 
-            // sapendo quanti cluster ho a disposizione posso creare la gamma
-            // di colori da utilizzare per la rappresentazione
-            var colori_array = getArrayColori(uniqueClusterName.length);
+        // sapendo quanti cluster ho a disposizione posso creare la gamma
+        // di colori da utilizzare per la rappresentazione
+        var colori_array = getArrayColori(uniqueClusterName.length);
 
-            // creo un nodo invisibile per ogni cluster
-            // tale nodo sarà il nodo centrale per la creazione di ogni cluster.
-            // A questo punto del codice la variabile "nodes" è una lista di nodi
-            // che contiene solo i nodi invisibili;
-            // ogni nodo ha un 'nome', appartiene a un 'group'
-            // ed ha coordinate iniziali (x,y)=(width/2,height/2).
-            var nodes = uniqueClusterName.map(function (d) {
-                return createNode('center' + d, d, height, width);
-            });
+        // creo un nodo invisibile per ogni cluster
+        // tale nodo sarà il nodo centrale per la creazione di ogni cluster.
+        // A questo punto del codice la variabile "nodes" è una lista di nodi
+        // che contiene solo i nodi invisibili;
+        // ogni nodo ha un 'nome', appartiene a un 'group'
+        // ed ha coordinate iniziali (x,y)=(width/2,height/2).
+        var nodes = uniqueClusterName.map(function (d) {
+            return createNode('center' + d, d, height, width);
+        });
 
-            console.log(nodes)
+        console.log(nodes)
 
-            // Visualizzazione dei nodi invisibili
-            show('center');
-        }, 0);
+        // Visualizzazione dei nodi invisibili
+        show('center');
 
         /* 
         #########################
@@ -444,6 +442,23 @@ function metodo2(charge, coeffNodi) {
                             .on("drag", dragged)
                             .on("end", dragended)
                     );
+
+                // exit() dei nodi
+                nodeElements.exit().remove();
+
+                // collegamenti
+                var linkElements = svg.selectAll(".link").data(links);
+
+                // enter() dei collegamenti
+                linkElements.enter().insert("line", ".node").attr("class", "link");
+
+                // exit() dei collegamenti
+                linkElements.exit().remove();
+
+                // riavvio della simulazione con aggiornamento dei nodes e dei links.
+                simulation.nodes(nodes)
+                simulation.force("link").links(links)
+                simulation.restart();
             }
             else {
                 if (name == 'nodes') {
@@ -466,29 +481,33 @@ function metodo2(charge, coeffNodi) {
                                 .on("drag", dragged)
                                 .on("end", dragended)
                         );
+
+                    // exit() dei nodi
+                    nodeElements.exit().remove();
+
+                    // collegamenti
+                    var linkElements = svg.selectAll(".link").data(links);
+
+                    // enter() dei collegamenti
+                    linkElements.enter().insert("line", ".node").attr("class", "link");
+
+                    // exit() dei collegamenti
+                    linkElements.exit().remove();
+
+                    // riavvio della simulazione con aggiornamento dei nodes e dei links.
+                    simulation.nodes(nodes)
+                    simulation.force("link").links(links)
+                    simulation.restart();
                 }
                 else {
                     throw "Parameter 'name' is not defined."
                 }
             }
 
-            // exit() dei nodi
-            nodeElements.exit().remove();
-
-            // collegamenti
-            var linkElements = svg.selectAll(".link").data(links);
-
-            // enter() dei collegamenti
-            linkElements.enter().insert("line", ".node").attr("class", "link");
-
-            // exit() dei collegamenti
-            linkElements.exit().remove();
-
-            // riavvio della simulazione con aggiornamento dei nodes e dei links.
-            simulation.nodes(nodes)
-            simulation.force("link").links(links)
-            simulation.restart();
+            console.log('---miao---')
         }
+
+
 
         // funzione che gestisce gli aggiornamenti della simulazione ad ogni tick
         function ticked() {
