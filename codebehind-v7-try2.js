@@ -387,9 +387,45 @@ function metodo2(charge, coeffNodi) {
         ######################### 
         */
 
+        // creo una lista che divide i nodi del grafo in gruppi secondo il cluster di appartenenza
+        var groups = Array.from(d3.group(nodiDaVedere, d => d.group), ([key, values]) => ({ key, values }))
+
+        console.log(groups)
+
         // aggiungo un ritardo temporale così da permettere che le azioni
         // precedenti abbiano il tempo di finire la loro esecuzione.
         showCatenelle = setTimeout(function () {
+
+            // ottengo la posizione del centro per ogni cluster. Tale posizione è data
+            // dalla posizione corrente occupata dal nodo "center" di ogni gruppo.
+            // [centro_cluster_x, centro_cluster_y, id_cluster]
+            var coordinateCentroNodiPosizion = simulation.nodes().map(function (d) {
+                return [d.x, d.y, d.group];
+            })
+
+            // iterazione dei gruppi
+            coordinateCentroNodiPosizion.forEach(function (d) {
+                var x = d[0];
+                var y = d[1];
+                var g = d[2];
+
+                // ottengo i nodi appartenenti al gruppo corrente
+                var nodiGruppo = getGroupById(groups, g)
+
+                // Decidi quanti nodi dovrà avere la catenella che lo circonda.
+                // Il numero di nodi è pari al logaritmo numero di nodi appartenenti al gruppo corrente
+                // per una costante per il coefficiente di numero di nodi deciso dall'utente tramite l'interfaccia.
+                var nNodiGroupCluster = Math.floor(Math.log(nodiGruppo.values.length) * 25 * coeffNodi);
+
+                // definisci il tracciato curvilineo su cui generare i nodi della catenella e disegnalo
+                var pathCircle = definePath(x, y, nNodiGroupCluster);
+                var circle = svg.append("path")
+                    .attr("d", pathCircle)
+                    .style("fill", "#f5f5f5")
+                    .style("opacity", 0.5);
+
+                console.log(pathCircle)
+            })
 
             // Visualizzazione dei nodi invisibili
             show('catenelle');
@@ -503,8 +539,6 @@ function metodo2(charge, coeffNodi) {
                     throw "Parameter 'name' is not defined."
                 }
             }
-
-            console.log('---miao---')
         }
 
 
@@ -978,23 +1012,23 @@ function decisiNumeroNodiInvisibili(n, coeffNodi) {
     return Math.floor(Math.log(n + 2.7) * 20 * coeffNodi)
 }
 
-//funzione di supporto
-//groups è una lista di liste
-//ogni lista raggruppa nodi dello stesso cluster ( [[nodox cluster 1, nodoy cluster 1, .... ], [nodox cluster 2, nodoy cluster 2, ....], [...]] )
-//getIndexGroup ritorna la lista dei nodi che ha chiave 'd' 
-function getIndexGroup(groups, d) {
+// funzione di supporto
+// groups è una lista di liste dove ogni lista raggruppa nodi dello stesso cluster.
+// getGroupById ritorna la lista dei nodi che appartengono al gruppo 'd' 
+function getGroupById(groups, d) {
     for (let i = 0; i < groups.length; i++) {
         if (groups[i].key == d) return groups[i];
     }
 }
 
-//funzione di supporto per defnire una path d3 a partire da una coordinata centrale cx,cy
-//e un parametro myr che rappresenta il numero di punti per lato
-function definePathcircle(cx, cy, myr) {
-    return "M" + cx + "," + cy + " " +
-        "m" + -myr + ", 0 " +
-        "a" + myr + "," + myr + " 0 1,0 " + myr * 2 + ",0 " +
-        "a" + myr + "," + myr + " 0 1,0 " + -myr * 2 + ",0Z";
+// funzione di supporto per defnire una path svg a partire da una coordinata centrale cx, cy (centro del cluster)
+// e un parametro myr che rappresenta il numero di punti per lato.
+// Si faccia caso all'utilizzo di 'm' invece di 'M' e di 'a' invece di 'A' per usare coordinate relative invece che assolute.
+function definePath(cx, cy, myr) {
+    return "M" + cx + " " + cy + " " +
+        "m" + -myr + " 0 " +
+        "a" + myr + " " + myr + " 0 1 0 " + myr * 2 + " 0 " +
+        "a" + myr + " " + myr + " 0 1 0 " + -myr * 2 + " 0Z";
 }
 
 
