@@ -587,13 +587,13 @@ function metodo2(charge, coeffNodi) {
                         .on("end", dragended)
                 );
 
-
-
             nodeElements.exit().remove();
+
+
+
 
             var linkElements = svg.selectAll(".link").data(links);
 
-            //proprietà dei link visualizzati
             linkElements.enter().insert("line", ".node").attr("class", "link");
             linkElements.exit().remove();
 
@@ -614,7 +614,6 @@ function metodo2(charge, coeffNodi) {
             var nodeElements = svg.selectAll(".node").data(nodes, function (d) {
                 return d.id;
             });
-
 
             //proprietà dei nodi visualizzati
             nodeElements.enter()
@@ -640,6 +639,7 @@ function metodo2(charge, coeffNodi) {
 
             //proprietà dei link visualizzati
             var linkElements = svg.selectAll(".link").data(links);
+
             linkElements.enter().insert("line", ".node").attr("class", "link");
             linkElements.exit().remove();
 

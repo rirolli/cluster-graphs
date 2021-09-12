@@ -34,9 +34,6 @@ function metodo1() {
     var nodiDaVedere = [...graph.nodes];
     var linkDaVedere = [...graph.links];
 
-    console.log(nodiDaVedere)
-    console.log(linkDaVedere)
-
     //crea lista contenente i nomi dei cluster senza ripetizioni (es [1,2,3,4...])
     var unique_cluster_name = [];
     nodiDaVedere.forEach(function (nodo) {
@@ -209,7 +206,7 @@ function metodo1() {
         })
         .attr("cursor", "pointer")
         .attr("r", function (nodo) { if (nodo.name.includes("invisibile")) return 10; else return 8 })
-        .attr("fill", function (nodo) { if (nodo.name.includes("invisibile")) return 'red'; else return colori_array[Number(nodo.group) - 1] })
+        .attr("fill", function (nodo) { if (nodo.name.includes("invisibile")) return 'red'; else return colori_array[nodo.group] })
         .attr("stroke", function (nodo) { if (nodo.name.includes("invisibile")) return 'none'; else return "black" })
         .call(
             //funzione associta al trascinamento del nodo 
@@ -274,7 +271,6 @@ function metodo2(charge, coeffNodi) {
     //save parameters
     const K = { 'charge': charge, 'coeffNodi': coeffNodi }
 
-    // #############
 
     function secondoDisegna() {
 
@@ -290,245 +286,237 @@ function metodo2(charge, coeffNodi) {
 
 
         //effettua una copia di lavoro del grafo 
-        // var MiaonodiDaVedere = graph.nodes.map(d => Object.create(d));
-        // var MiaolinkDaVedere = graph.links.map(d => Object.create(d));
-        // console.log(MiaonodiDaVedere)
-
         var nodiDaVedere = [...graph.nodes];
         var linkDaVedere = [...graph.links];
-        // var linkDaVedere = [];
 
-        // console.log(graph.nodes)
-
-        // graph.links.forEach(function (d) {
-        //     let sourceNode = nodiDaVedere.filter(obj => { return obj.name == d.source});
-        //     let targetNode = nodiDaVedere.filter(obj => { return obj.name == d.target});
-        //     console.log(sourceNode)
-        //     linkDaVedere.push(...[{source: sourceNode[0], target: targetNode[0], value: d.value}]);
-
-        // });
-
-        // var nodiDaVedere = graph.nodes;
-        // var linkDaVedere = graph.links;
-
+        console.log(graph.nodes)
         console.log(nodiDaVedere)
-        console.log(graph.links)
 
-        var groups = Array.from(d3.group(nodiDaVedere, d => d.group), ([key, values]) => ({ key, values }))
 
-        console.log(linkDaVedere)
+        //liste di supporto dei nodi e dei link 
+        var nodes = [];
+        var links = [];
 
-        // ottengo i nomi dei cluster
-        var unique_cluster_name = [];
-        nodiDaVedere.forEach(function (nodo) {
-            if (!unique_cluster_name.includes(nodo.group))
-                unique_cluster_name.push(nodo.group);
-        })
+        var chargeForce = d3.forceManyBody()
 
-        console.log(groups)
-
-        // colori per colorare i cluster
-        var colori_array = getArrayColori(unique_cluster_name.length)
-
-        unique_cluster_name.forEach(function (d) {
-
-            // trovo il gruppo corrispondente all'indice corrente
-            let group = groups.filter(obj => { return obj.key == d });
-
-            // creo il nodo fittizio centro del cluster
-            invisibleNode = createNode('center' + String(d), 100, height, width);
-            nodiDaVedere.push(...[invisibleNode]);
-
-            // collego il nodo fittizio a tutti i nodi del cluster
-            group[0].values.forEach(function (nodo) {
-                linkDaVedere.push(...[{ source: invisibleNode, target: nodo, value: 15 }])
-            });
-
-            // decido il numero di nodi per creare la catenella per questo gruppo
-            var nNodiGroupCluster = decisiNumeroNodiInvisibili(group.values.length, coeffNodi);
-
-            // creo i nodi e i link
-            for (i = 0; i < nNodiGroupCluster; i++) {
-                // creo il nodo della catenella
-                let catenellaNode = createNode(String(d) + 'catenella' + String(i), 100, height, width);
-                nodiDaVedere.push(...[catenellaNode])
-
-                // collego i nodi della catenina ai nodi invisibili
-                linkDaVedere.push(...[{ source: catenellaNode, target: invisibleNode, value: 8 }])  // catenella -> centro
-
-                // collego il nodo corrente della catena al precedente
-                if (i > 0) {
-                    let s = nodiDaVedere.filter(obj => { return obj.name == String(d) + 'catenella' + String(i - 1) })[0];
-
-                    console.log({ source: s, target: catenellaNode, value: 8 })
-                    linkDaVedere.push(...[{ source: s, target: catenellaNode, value: 8 }]);
-
-                    if (i == (nNodiGroupCluster - 1)) {    // se ultimo nodo allora chiudo la catena
-                        let t = nodiDaVedere.filter(obj => { return obj.name == String(d) + 'catenella' + String(0) })[0];
-                        console.log({ source: catenellaNode, target: t, value: 8 })
-                        linkDaVedere.push(...[{ source: catenellaNode, target: t, value: 8 }]);
+        // inizializzo la simulazione
+        simulation = d3.forceSimulation()
+            .force("link", d3.forceLink()
+                .distance(200)
+                .strength(.6)
+                .id(d => d.name)
+                .distance(function (d) {
+                    if (d.source.name.includes("center") && d.target.name.includes("center ")) {
+                        return -50;
                     }
-                }
-
-                // collego il nodo della catena a tutti i nodi del cluster
-                group[0].values.forEach(function (nodo) {
-                    linkDaVedere.push(...[{ source: catenellaNode, target: nodo, value: 0 }])   // da nodo della catena a nodi del cluster
-                });
-
-            }
-        });
-        console.log(nodiDaVedere)
-        console.log(linkDaVedere)
-
-        start()
-
-        function start() {
-            simulation = d3.forceSimulation(nodiDaVedere)
-                .force("link", d3.forceLink().links(linkDaVedere).id(d => d.name)
-                    .strength(function (d) {
-                        if (d.source.name.includes('catenella') && d.target.name.includes('catenella')) {   // forza tra catenelle
-                            return .5;
-                        }
-                        else {
-                            if (d.source.name.includes('catenella') && d.target.name.includes('center')) {      // forza tra catenella e centro
-                                return .1;
+                    else {
+                        if ((d.source.name.includes("center") || d.target.name.includes("center")) && d.source.group == d.target.group) {
+                            return 20;
+                        } else {
+                            if (d.source.group == d.target.group) {
+                                return 0;
                             }
                             else {
-                                if (d.source.name.includes('center') || d.target.name.includes('center')) {     // forza tra nodi reali e centro
-                                    return 1.5;
-                                }
-                                else {
-                                    if (d.source.name.includes('catenella') || d.target.name.includes('catenella')) { // forza tra catenella e nodi qualsiasi
-                                        return .1;
-                                    }
-                                    else {                                                                            // forza tra nodi normali
-                                        return .1;
-                                    }
-                                }
-
+                                return 0;
                             }
                         }
-                    })
-                    .distance((function (d) {
-                        if (d.source.name.includes('catenella') && d.target.name.includes('catenella')) {   // forza tra catenelle
-                            return 10;
-                        }
-                        else {
-                            if (d.source.name.includes('catenella') && d.target.name.includes('center')) {      // forza tra catenella e centro
-                                return 60;
-                            }
-                            else {
-                                if (d.source.name.includes('center') || d.target.name.includes('center')) {     // forza tra nodi reali e centro
-                                    return 25;
-                                }
-                                else {
-                                    if (d.source.name.includes('catenella') || d.target.name.includes('catenella')) { // forza tra catenella e nodi qualsiasi
-                                        return 40;
-                                    }
-                                    else {                                                                          // forza tra nodi normali
-                                        return 40;
-                                    }
-                                }
-
-                            }
-                        }
-                    })
-                    )
-                )
-                .force("charge", d3.forceManyBody())
-                .force("collide", d3.forceCollide().radius(d => d.r + 1))
-                .force("center", d3.forceCenter(width / 2, height / 2));
-
-            var link = svg.append("g")
-                .attr("stroke", "#999")
-                .selectAll("line")
-                .attr('class', 'link')
-                .data(linkDaVedere)
-                .join("line")
-                .attr("stroke-opacity", function (d) {
-                    if (d.source.name.includes('catenella') && d.target.name.includes('catenella')) {   // link tra nodi di una catena
+                    }
+                }).strength(function (d) {
+                    if (d.source.name.includes("center") && d.target.name.includes("center")) {
                         return 1;
                     }
                     else {
-                        if (d.source.name.includes("catenella") || d.target.name.includes("catenella")) {   // link tra catena e nodi
+                        if ((d.source.name.includes("center") || d.target.name.includes("center")) && d.source.group == d.target.group) {
                             return 0;
                         }
                         else {
-                            return 0.6;
+                            if (d.source.group == d.target.group) {
+                                return 0
+                            }
+                            else {
+                                return 0;
+                            }
                         }
                     }
-                })
-                .attr("stroke-width", d => Math.sqrt(d.value));
+                }))
+            .force("charge", chargeForce)
+            .force("x", d3.forceX(width / 2))
+            .force("y", d3.forceY(height / 2))
+            .force('collision', d3.forceCollide().radius(function (d) {
+                if (d.name.includes("center"))
+                    return 200;
+                else
+                    return 40;
+            })).on("tick", ticked);
 
-            // var link = svg.selectAll(".link")
-            //     .data(linkDaVedere);
+        /* 
+        #########################
+        CREAZIONE NODI INVISIBILI
+        ######################### 
+        */
 
-            // link.enter()
-            //     .insert("line", ".node")
-            //     .attr("stroke", "#999")
-            //     .attr("stroke-opacity", 0.6)
-            //     .attr('class', 'link')
-            //     .attr("stroke-width", d => Math.sqrt(d.value));
-
-            // link.exit().remove();
-
-            var node = svg.append("g")
-                .attr("stroke", "black")
-                .attr("stroke-width", 1.5)
-                .selectAll("circle")
-                .data(nodiDaVedere)
-                .join("circle")
-                .attr("id", d => d.name)
-                .attr("fill", function (nodo) {
-                    if (nodo.name.includes('catenella'))
-                        return 'black';
-                    if (nodo.name.includes('center'))
-                        return 'red';
-                    else
-                        return colori_array[Number(nodo.group) - 1];
-                })
-                .attr("r", 8)
-                .call(drag(simulation));
-
-            // var node = svg.selectAll(".node")
-            //     .data(nodiDaVedere);
-
-            // node.enter()
-            //     .append("circle")
-            //     .attr("class", "node")
-            //     .attr("stroke", "black")
-            //     .attr("stroke-width", 1.5)
-            //     .attr("fill", function (nodo) {
-            //         if (nodo.name == 'catenella')
-            //             return 'miao';
-            //         else
-            //             return colori_array[Number(nodo.group) - 1];
-            //     })
-            //     .attr("r", 8)
-            //     .call(drag(simulation));
-
-            // node.call(drag(simulation));
-
-            node.exit().remove();
-
-
-            simulation.on("tick", () => {
-                link
-                    .attr("x1", d => Math.max(50, Math.min(width - 50, d.source.x)))
-                    .attr("y1", d => Math.max(50, Math.min(height - 50, d.source.y)))
-                    .attr("x2", d => Math.max(50, Math.min(width - 50, d.target.x)))
-                    .attr("y2", d => Math.max(50, Math.min(height - 50, d.target.y)));
-
-                node
-                    .attr("cx", d => Math.max(50, Math.min(width - 50, d.x)))
-                    .attr("cy", d => Math.max(50, Math.min(height - 50, d.y)));
+        showCenter = setTimeout(function () {
+            // creo una lista dei cluster presenti nel nostro dataset
+            var uniqueClusterName = [];
+            nodiDaVedere.forEach(function (nodo) {
+                if (!uniqueClusterName.includes(nodo.group))
+                    uniqueClusterName.push(nodo.group);
             });
 
+            // sapendo quanti cluster ho a disposizione posso creare la gamma
+            // di colori da utilizzare per la rappresentazione
+            var colori_array = getArrayColori(uniqueClusterName.length);
+
+            // creo un nodo invisibile per ogni cluster
+            // tale nodo sarà il nodo centrale per la creazione di ogni cluster.
+            // A questo punto del codice la variabile "nodes" è una lista di nodi
+            // che contiene solo i nodi invisibili;
+            // ogni nodo ha un 'nome', appartiene a un 'group'
+            // ed ha coordinate iniziali (x,y)=(width/2,height/2).
+            var nodes = uniqueClusterName.map(function (d) {
+                return createNode('center' + d, d, height, width);
+            });
+
+            console.log(nodes)
+
+            // Visualizzazione dei nodi invisibili
+            show('center');
+        }, 0);
+
+        /* 
+        #########################
+        CREAZIONE CATENELLE
+        ######################### 
+        */
+
+        // aggiungo un ritardo temporale così da permettere che le azioni
+        // precedenti abbiano il tempo di finire la loro esecuzione.
+        showCatenelle = setTimeout(function () {
+
+            // Visualizzazione dei nodi invisibili
+            show('catenelle');
+        }, 1000);
+
+        /* 
+        #########################
+        VISUALIZZAZIONE DEL GRAFO
+        ######################### 
+        */
+
+        // aggiungo un ritardo temporale così da permettere che le azioni
+        // precedenti abbiano il tempo di finire la loro esecuzione.
+        showCatenelle = setTimeout(function () {
+
+            // Visualizzazione dei nodi invisibili
+            show('nodes');
+        }, 3000);
+
+        /* 
+        #########################
+        FUNZIONI DI VISUALIZZAZIONE
+        ######################### 
+        */
+
+        // la funzione show viene eseguita una prima volta per visualizzare i nodi invisibili "centrali".
+        // name = ['center', 'catenelle', 'nodes']
+        function show(name) {
+            // nodi
+            var nodeElements = svg.selectAll(".node").data(nodes, function (d) {
+                return d.id
+            });
+
+            if (name == 'center' || name == 'catenelle') {
+                // enter() dei nodi
+                nodeElements.enter()
+                    .append("circle")
+                    .attr("class", d => "node " + d.id)
+                    .attr("id", d => d.name)
+                    .attr("r", 8)
+                    .attr("fill", function (d) {
+                        if (
+                            d.name.includes("center")) return "black"; else return colori_array[d.group]
+                    })
+                    .attr("stroke", function (nodo) { if (nodo.name.includes("center")) return 'black'; else return "none" })
+                    .call(
+                        d3
+                            .drag()
+                            .on("start", dragstarted)
+                            .on("drag", dragged)
+                            .on("end", dragended)
+                    );
+            }
+            else {
+                if (name == 'nodes') {
+                    nodeElements.enter()
+                        .append("circle")
+                        .attr("class", function (d) { return "node " + d.id; })
+                        .attr("r", function (d) {
+                            if (d.name.includes("invisibile")) {
+                                return 10;
+                            } else {
+                                return 8
+                            }
+                        })
+                        .attr("fill", function (d) { return colori_array[d.group] })
+                        .attr("cursor", "pointer")
+                        .call(
+                            d3
+                                .drag()
+                                .on("start", dragstarted)
+                                .on("drag", dragged)
+                                .on("end", dragended)
+                        );
+                }
+                else {
+                    throw "Parameter 'name' is not defined."
+                }
+            }
+
+            // exit() dei nodi
+            nodeElements.exit().remove();
+
+            // collegamenti
+            var linkElements = svg.selectAll(".link").data(links);
+
+            // enter() dei collegamenti
+            linkElements.enter().insert("line", ".node").attr("class", "link");
+
+            // exit() dei collegamenti
+            linkElements.exit().remove();
+
+            // riavvio della simulazione con aggiornamento dei nodes e dei links.
+            simulation.nodes(nodes)
+            simulation.force("link").links(links)
             simulation.restart();
         }
-    }
 
-    // #############
+        // funzione che gestisce gli aggiornamenti della simulazione ad ogni tick
+        function ticked() {
+
+            var nodeElements = svg.selectAll(".node");
+            var linkElements = svg.selectAll(".link");
+
+            //se il nodo è fuori dalla tela, inseriscilo in una posizione valida della tela
+            nodeElements.attr("cx", function (d) {
+                if (d.name.includes("groupCluster")) {
+                    return d.x
+                }
+                return d.x = Math.max(50, Math.min(width - 50, d.x));
+            })
+                .attr("cy", function (d) {
+                    if (d.name.includes("groupCluster")) {
+                        return d.y
+                    }
+                    return d.y = Math.max(50, Math.min(height - 50, d.y));
+                });
+
+            linkElements.attr("x1", function (d) { return d.source.x; })
+                .attr("y1", function (d) { return d.source.y; })
+                .attr("x2", function (d) { return d.target.x; })
+                .attr("y2", function (d) { return d.target.y; });
+
+        }
+    }
 
     secondoDisegna();
 
@@ -717,7 +705,7 @@ function metodo3(raggio) {
                     return 8;
                 }
             })
-            .attr("fill", function (nodo) { if (nodo.name.includes("invisibile")) return "rgba(54, 208, 242, 0.2)"; else return colori_array[Number(nodo.group) - 1] })
+            .attr("fill", function (nodo) { if (nodo.name.includes("invisibile")) return "rgba(54, 208, 242, 0.2)"; else return colori_array[nodo.group] })
             .attr("stroke", "black")
 
             .call(
@@ -868,31 +856,6 @@ function hideOrShowInvisibleNode(checkbox) {
 //funzione di supporto per calcolare la distanza tra due punti (x1,y1) e (x2,y2)
 function distanzaCentro(x2, y2, x1, y1) {
     return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))
-}
-
-drag = simulation => {
-
-    function dragstarted(event) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        event.subject.fx = event.subject.x;
-        event.subject.fy = event.subject.y;
-    }
-
-    function dragged(event) {
-        event.subject.fx = event.x;
-        event.subject.fy = event.y;
-    }
-
-    function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0);
-        event.subject.fx = null;
-        event.subject.fy = null;
-    }
-
-    return d3.drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended);
 }
 
 //funzione di supporto all'inizio del drag 
@@ -1059,8 +1022,12 @@ function clearSetTimeoutFunction() {
 window.onload = function () {
     update();
 
+
     // caricamento del json 
+
     var copyJson = [];
+
+    console.log('bau')
 
     d3.json("/data.json").then(function (data) {
         console.log('miao')
@@ -1095,9 +1062,8 @@ window.onload = function () {
             graph3['nodes'] = copyJson[2].nodes;
             graph3['links'] = copyJson[2].links;
 
-
             graph = { ...graph1 };
         }
-    }, 1000);
 
+    }, 1000);
 };
