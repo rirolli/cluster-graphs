@@ -397,12 +397,12 @@ function metodo2(charge, coeffNodi) {
             // ottengo la posizione del centro per ogni cluster. Tale posizione è data
             // dalla posizione corrente occupata dal nodo "center" di ogni gruppo.
             // [centro_cluster_x, centro_cluster_y, id_cluster]
-            var coordinateCentroNodiPosizion = simulation.nodes().map(function (d) {
+            var coordinateCentroNodiPosizione = simulation.nodes().map(function (d) {
                 return [d.x, d.y, d.group];
-            })
+            });
 
             // iterazione sui gruppi
-            coordinateCentroNodiPosizion.forEach(function (d) {
+            coordinateCentroNodiPosizione.forEach(function (d) {
                 var x = d[0];
                 var y = d[1];
                 var g = d[2];
@@ -528,6 +528,35 @@ function metodo2(charge, coeffNodi) {
         // precedenti abbiano il tempo di finire la loro esecuzione.
         showCatenelle = setTimeout(function () {
 
+            // Calcolare nuovamente la posizione dei nodi centrali (nel caso si fossero
+            // spostati rispetto allo step precedente)
+            coordinateCentroNodiPosizione = [];
+            simulation.nodes().forEach(function (d) {
+                if (d.name.includes('center'))
+                    coordinateCentroNodiPosizione.push({ x: d.x, y: d.y, group: d.group })
+            });
+            
+            // Calcolo della posizione di spawn dei nodi appartenenti al grafo. Tale posizione
+            // coincide con quella dei nodi centrali più un offset.
+            nodiDaVedere.forEach(function (d) {
+
+                // Acquisisco il centro del gruppo (ovvero dove scoppierà il cluster di nodi)
+                // il centro coincide con la posizione del nodo invisibile centrale
+                const centro = getCenterByGroup(d.group, coordinateCentroNodiPosizione);
+
+                // Aggiorno le coordiare del nodo con quelle centrali
+                d.x = centro.x;
+                d.y = centro.y;
+
+                // Aggiungo il nodo alla lista dei nodi da visualizzare
+                nodes.push(d);
+            });
+
+            // Rimozione dei nodi centrali (non più necessari)
+            nodes = nodes.filter(d => !(d.name.includes('center')));
+
+            links.push(...linkDaVedere);
+
             // Visualizzazione dei nodi invisibili
             show('nodes');
         }, 3000);
@@ -538,8 +567,8 @@ function metodo2(charge, coeffNodi) {
         ######################### 
         */
 
-        // la funzione show viene eseguita una prima volta per visualizzare i nodi invisibili "centrali".
-        // name = ['center', 'catenelle', 'nodes']
+        // La funzione 'show' ha il compito di riavviare la simulazione ogni volta che dei nuovi
+        // nodi vengono aggiunti.
         function show(name) {
 
             console.log(nodes)
@@ -629,8 +658,6 @@ function metodo2(charge, coeffNodi) {
                 }
             }
         }
-
-
 
         // funzione che gestisce gli aggiornamenti della simulazione ad ogni tick
         function ticked() {
@@ -1095,12 +1122,6 @@ function createNode(nome, group, height, width) {
     return { "name": nome, "x": width / 2, "y": height / 2, group }
 }
 
-//funzione di supporto per definire grandezza delle catenelle dei cluster.
-//la grandezza delle catenelle dipende anche dal numero di nodi di un cluster (n) e un coefficiente coeffNodi
-function decisiNumeroNodiInvisibili(n, coeffNodi) {
-    return Math.floor(Math.log(n + 2.7) * 20 * coeffNodi)
-}
-
 // funzione di supporto
 // groups è una lista di liste dove ogni lista raggruppa nodi dello stesso cluster.
 // getGroupById ritorna la lista dei nodi che appartengono al gruppo 'd' 
@@ -1124,7 +1145,7 @@ function definePath(cx, cy, myr) {
 //funzione di supporto per acquisire l'elemento di listaNodi del cluster 'group'
 //listaNodi è una lista di elementi con i 3 campi 
 //(x,y): coordinate del centro e group: cluster di appartenenza
-function getNodeGroup(group, listaNodi) {
+function getCenterByGroup(group, listaNodi) {
     for (var i = 0; i < listaNodi.length; i++) {
         if (listaNodi[i].group == group) {
             return listaNodi[i];
