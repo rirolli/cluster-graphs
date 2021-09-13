@@ -376,8 +376,6 @@ function metodo2(charge, coeffNodi) {
             return createNode('center' + d, d, height, width);
         });
 
-        console.log(nodes)
-
         // Visualizzazione dei nodi invisibili
         show('center');
 
@@ -403,29 +401,118 @@ function metodo2(charge, coeffNodi) {
                 return [d.x, d.y, d.group];
             })
 
-            // iterazione dei gruppi
+            // iterazione sui gruppi
             coordinateCentroNodiPosizion.forEach(function (d) {
                 var x = d[0];
                 var y = d[1];
                 var g = d[2];
 
-                // ottengo i nodi appartenenti al gruppo corrente
+                // Ottengo i nodi appartenenti al gruppo corrente
                 var nodiGruppo = getGroupById(groups, g)
 
                 // Decidi quanti nodi dovrà avere la catenella che lo circonda.
                 // Il numero di nodi è pari al logaritmo numero di nodi appartenenti al gruppo corrente
                 // per una costante per il coefficiente di numero di nodi deciso dall'utente tramite l'interfaccia.
-                var nNodiGroupCluster = Math.floor(Math.log(nodiGruppo.values.length) * 25 * coeffNodi);
+                var nNodiCatenellaCluster = Math.floor(Math.log(nodiGruppo.values.length) * 25 * coeffNodi);
+                console.log(nNodiCatenellaCluster)
 
-                // definisci il tracciato curvilineo su cui generare i nodi della catenella e disegnalo
-                var pathCircle = definePath(x, y, nNodiGroupCluster);
+                // Definisci il tracciato curvilineo su cui generare i nodi della catenella e disegnalo
+                var pathCircle = definePath(x, y, nNodiCatenellaCluster);
                 var circle = svg.append("path")
                     .attr("d", pathCircle)
                     .style("fill", "#f5f5f5")
                     .style("opacity", 0.5);
 
                 console.log(pathCircle)
-            })
+
+                // Creazione della catenella
+                for (let i = 0; i < nNodiCatenellaCluster; i++) {
+                    // Creazione di un nuovo nodo con coordiate iniziali (x,y)=(width/2,height/2).
+                    var nodoCatenella = createNode(String(i) + 'groupCluster' + String(g), 100, height, width);
+
+                    // Calcola la posizione in cui deve essere posizionato tale nodo sul path prefissato 'circle'
+                    var coord = circleCoord(circle, nodoCatenella, i, nNodiCatenellaCluster);
+
+                    // Aggiorno la posizione del nodo della catenella con le coordinate calcolate
+                    nodoCatenella.x = coord.x;
+                    nodoCatenella.y = coord.y;
+
+                    // Aggiungo il nuovo nodo nella lista dei nodi da rappresentare
+                    nodes.push(...[nodoCatenella]);
+
+                    // Creazione dei link tra nodi
+                    if (i > 0) {    // Collaga il nodo corrente al precedente
+                        links.push(...[{ source: String(i - 1) + 'groupCluster' + String(g), target: String(i) + 'groupCluster' + String(g) }])
+                    }
+                    if (i == nNodiCatenellaCluster - 1) {   // Collega il nodo corrente al primo della catena concludendo il cerchio.
+                        links.push(...[{ source: String(i) + 'groupCluster' + String(g), target: String(0) + 'groupCluster' + String(g) }])
+                    }
+                }
+                // Rimozione del path di guida (non più necessario)
+                circle.remove();
+
+            });
+
+            console.log(nodes)
+
+            // I nodi appartenenti alla stessa catenella si respingono tra loro
+            chargeForce.strength(function (d) {
+                if (d.name.includes("groupCluster"))
+                    return -50;
+            });
+
+            // Aggiornamento delle forze della simulazione
+            simulation
+                .force("link", d3
+                    .forceLink()
+                    .id(function (d) { return d.name; })
+                    .distance(function (link) {
+                        // se i nodi sono dello stesso gruppo, il nodo centrale attrae gli altri nodi; gli altri non si attraggono/respingono.
+                        if (link.source.group == link.target.group) {
+                            if ((!link.source.name.includes("center")) && (!link.target.name.includes("center"))) {
+                                return 0;
+                            }
+                            else {
+                                if ((link.source.name.includes("center")) && (!link.target.name.includes("center"))) {
+                                    return -50;
+                                }
+                                else {
+                                    return 0;
+                                }
+                            }
+                        }
+                        //se i nodi non sono dello stesso gruppo, gli invisibili si respingono; gli altri non si attraggono/respingono
+                        else {
+                            if (link.source.name.includes("center") && link.target.name.includes("center")) {
+                                return 600;
+                            }
+                            else {
+                                return 0;
+                            }
+                        }
+                    })
+                    .strength(function (d) {
+                        if (d.source.name.includes("center") && d.target.name.includes("center")) {
+                            return 0.2;
+                        }
+                        else {
+                            if ((d.source.name.includes("center") || d.target.name.includes("center")) && d.source.group == d.target.group) {
+                                return 0.6;
+                            }
+                            else {
+                                if ((d.source.group == d.target.group) && (d.source.name.includes('groupCluster'))) {
+                                    return 1;
+                                }
+                                else {
+                                    return 0;
+                                }
+                            }
+                        }
+                    }))
+
+                .force("charge", chargeForce)
+                .force('collision', d3.forceCollide().radius(function (d) { if (d.name.includes("groupCluster")) return 8; else return 10; }))
+                .on("tick", ticked);
 
             // Visualizzazione dei nodi invisibili
             show('catenelle');
@@ -454,6 +541,8 @@ function metodo2(charge, coeffNodi) {
         // la funzione show viene eseguita una prima volta per visualizzare i nodi invisibili "centrali".
         // name = ['center', 'catenelle', 'nodes']
         function show(name) {
+
+            console.log(nodes)
             // nodi
             var nodeElements = svg.selectAll(".node").data(nodes, function (d) {
                 return d.id
@@ -463,7 +552,7 @@ function metodo2(charge, coeffNodi) {
                 // enter() dei nodi
                 nodeElements.enter()
                     .append("circle")
-                    .attr("class", d => "node " + d.id)
+                    .attr("class", d => "node " + d.name)
                     .attr("id", d => d.name)
                     .attr("r", 8)
                     .attr("fill", function (d) {
@@ -1044,8 +1133,8 @@ function getNodeGroup(group, listaNodi) {
 }
 
 
-//funzione di supporto che ritorna un punto
-//tale punto è posizionato intorno a un circle, successivo a un node
+// Funzione che distanzia uniformemente i nodi lungo la circonferenza di 'circle'.
+// Credits: Kyle Rosenberg’s Block 989204175f68f40dfe3b, http://bl.ocks.org/krosenberg/989204175f68f40dfe3b
 function circleCoord(circle, node, index, num_nodes) {
     var circumference = circle.node().getTotalLength();
 
