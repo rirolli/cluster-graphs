@@ -206,7 +206,7 @@ function metodo1() {
         })
         .attr("cursor", "pointer")
         .attr("r", function (nodo) { if (nodo.name.includes("invisibile")) return 10; else return 8 })
-        .attr("fill", function (nodo) { if (nodo.name.includes("invisibile")) return 'red'; else return colori_array[nodo.group] })
+        .attr("fill", function (nodo) { if (nodo.name.includes("invisibile")) return 'red'; else return colori_array[nodo.group-1] })
         .attr("stroke", function (nodo) { if (nodo.name.includes("invisibile")) return 'none'; else return "black" })
         .call(
             //funzione associta al trascinamento del nodo 
@@ -428,7 +428,7 @@ function metodo2(charge, coeffNodi) {
                 // Creazione della catenella
                 for (let i = 0; i < nNodiCatenellaCluster; i++) {
                     // Creazione di un nuovo nodo con coordiate iniziali (x,y)=(width/2,height/2).
-                    var nodoCatenella = createNode(String(i) + 'groupCluster' + String(g), 100, height, width);
+                    var nodoCatenella = createNode(String(i) + 'catenella' + String(g), 100, height, width);
 
                     // Calcola la posizione in cui deve essere posizionato tale nodo sul path prefissato 'circle'
                     var coord = circleCoord(circle, nodoCatenella, i, nNodiCatenellaCluster);
@@ -442,10 +442,10 @@ function metodo2(charge, coeffNodi) {
 
                     // Creazione dei link tra nodi
                     if (i > 0) {    // Collaga il nodo corrente al precedente
-                        links.push(...[{ source: String(i - 1) + 'groupCluster' + String(g), target: String(i) + 'groupCluster' + String(g) }])
+                        links.push(...[{ source: String(i - 1) + 'catenella' + String(g), target: String(i) + 'catenella' + String(g) }])
                     }
                     if (i == nNodiCatenellaCluster - 1) {   // Collega il nodo corrente al primo della catena concludendo il cerchio.
-                        links.push(...[{ source: String(i) + 'groupCluster' + String(g), target: String(0) + 'groupCluster' + String(g) }])
+                        links.push(...[{ source: String(i) + 'catenella' + String(g), target: String(0) + 'catenella' + String(g) }])
                     }
                 }
                 // Rimozione del path di guida (non più necessario)
@@ -457,7 +457,7 @@ function metodo2(charge, coeffNodi) {
 
             // I nodi appartenenti alla stessa catenella si respingono tra loro
             chargeForce.strength(function (d) {
-                if (d.name.includes("groupCluster"))
+                if (d.name.includes("catenella"))
                     return -50;
             });
 
@@ -500,7 +500,7 @@ function metodo2(charge, coeffNodi) {
                                 return 0.6;
                             }
                             else {
-                                if ((d.source.group == d.target.group) && (d.source.name.includes('groupCluster'))) {
+                                if ((d.source.group == d.target.group) && (d.source.name.includes('catenella'))) {
                                     return 1;
                                 }
                                 else {
@@ -511,7 +511,7 @@ function metodo2(charge, coeffNodi) {
                     }))
 
                 .force("charge", chargeForce)
-                .force('collision', d3.forceCollide().radius(function (d) { if (d.name.includes("groupCluster")) return 8; else return 10; }))
+                .force('collision', d3.forceCollide().radius(function (d) { if (d.name.includes("catenella")) return 8; else return 10; }))
                 .on("tick", ticked);
 
             // Visualizzazione dei nodi invisibili
@@ -538,6 +538,14 @@ function metodo2(charge, coeffNodi) {
             
             // Calcolo della posizione di spawn dei nodi appartenenti al grafo. Tale posizione
             // coincide con quella dei nodi centrali più un offset.
+            // Il valore dell'offset è limitato al numero di nodi appartenenti al gruppo.
+            var offset = {};
+            uniqueClusterName.forEach(function (d) {
+                offset[d] = getIndexGroup(groups, d).values.length;
+            });
+
+            console.log(offset)
+
             nodiDaVedere.forEach(function (d) {
 
                 // Acquisisco il centro del gruppo (ovvero dove scoppierà il cluster di nodi)
@@ -545,8 +553,8 @@ function metodo2(charge, coeffNodi) {
                 const centro = getCenterByGroup(d.group, coordinateCentroNodiPosizione);
 
                 // Aggiorno le coordiare del nodo con quelle centrali
-                d.x = centro.x;
-                d.y = centro.y;
+                d.x = centro.x + (Math.random() * offset[d.group]);
+                d.y = centro.y + (Math.random() * offset[d.group]);
 
                 // Aggiungo il nodo alla lista dei nodi da visualizzare
                 nodes.push(d);
@@ -586,9 +594,9 @@ function metodo2(charge, coeffNodi) {
                     .attr("r", 8)
                     .attr("fill", function (d) {
                         if (
-                            d.name.includes("center")) return "black"; else return colori_array[d.group]
+                            d.name.includes("center")) return "black"; else return colori_array[d.group-1]
                     })
-                    .attr("stroke", function (nodo) { if (nodo.name.includes("center")) return 'black'; else return "none" })
+                    .attr("stroke", function (nodo) { if (nodo.name.includes("center")) return 'black'; else return "black" })
                     .call(
                         d3
                             .drag()
@@ -620,13 +628,13 @@ function metodo2(charge, coeffNodi) {
                         .append("circle")
                         .attr("class", function (d) { return "node " + d.id; })
                         .attr("r", function (d) {
-                            if (d.name.includes("invisibile")) {
+                            if (d.name.includes("center")) {
                                 return 10;
                             } else {
                                 return 8
                             }
                         })
-                        .attr("fill", function (d) { return colori_array[d.group] })
+                        .attr("fill", function (d) { return colori_array[d.group-1] })
                         .attr("cursor", "pointer")
                         .call(
                             d3
@@ -667,13 +675,13 @@ function metodo2(charge, coeffNodi) {
 
             //se il nodo è fuori dalla tela, inseriscilo in una posizione valida della tela
             nodeElements.attr("cx", function (d) {
-                if (d.name.includes("groupCluster")) {
+                if (d.name.includes("catenella")) {
                     return d.x
                 }
                 return d.x = Math.max(50, Math.min(width - 50, d.x));
             })
                 .attr("cy", function (d) {
-                    if (d.name.includes("groupCluster")) {
+                    if (d.name.includes("catenella")) {
                         return d.y
                     }
                     return d.y = Math.max(50, Math.min(height - 50, d.y));
@@ -874,7 +882,7 @@ function metodo3(raggio) {
                     return 8;
                 }
             })
-            .attr("fill", function (nodo) { if (nodo.name.includes("invisibile")) return "rgba(54, 208, 242, 0.2)"; else return colori_array[nodo.group] })
+            .attr("fill", function (nodo) { if (nodo.name.includes("invisibile")) return "rgba(54, 208, 242, 0.2)"; else return colori_array[nodo.group-1] })
             .attr("stroke", "black")
 
             .call(
@@ -1126,6 +1134,16 @@ function createNode(nome, group, height, width) {
 // groups è una lista di liste dove ogni lista raggruppa nodi dello stesso cluster.
 // getGroupById ritorna la lista dei nodi che appartengono al gruppo 'd' 
 function getGroupById(groups, d) {
+    for (let i = 0; i < groups.length; i++) {
+        if (groups[i].key == d) return groups[i];
+    }
+}
+
+//funzione di supporto
+//groups è una lista di liste
+//ogni lista raggruppa nodi dello stesso cluster ( [[nodox cluster 1, nodoy cluster 1, .... ], [nodox cluster 2, nodoy cluster 2, ....], [...]] )
+//getIndexGroup ritorna la lista dei nodi che ha chiave 'd' 
+function getIndexGroup(groups, d) {
     for (let i = 0; i < groups.length; i++) {
         if (groups[i].key == d) return groups[i];
     }
