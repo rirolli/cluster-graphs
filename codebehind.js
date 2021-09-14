@@ -1139,10 +1139,8 @@ function getGroupById(groups, d) {
     }
 }
 
-//funzione di supporto
-//groups è una lista di liste
-//ogni lista raggruppa nodi dello stesso cluster ( [[nodox cluster 1, nodoy cluster 1, .... ], [nodox cluster 2, nodoy cluster 2, ....], [...]] )
-//getIndexGroup ritorna la lista dei nodi che ha chiave 'd' 
+// Funzione che restituisce il gruppo di nodi appartenenti al cluster d dalla
+// lista di cluster groups.
 function getIndexGroup(groups, d) {
     for (let i = 0; i < groups.length; i++) {
         if (groups[i].key == d) return groups[i];
