@@ -403,12 +403,11 @@ function metodo2(charge, coeffNodi) {
 
             // iterazione sui gruppi
             coordinateCentroNodiPosizione.forEach(function (d) {
-                var x = d[0];
-                var y = d[1];
-                var g = d[2];
+                // Memorizzo le coordinate del nodo centrale in un oggetto
+                var coordinateCentro = {'x':d[0], 'y':d[1], 'group':d[2]};
 
                 // Ottengo i nodi appartenenti al gruppo corrente
-                var nodiGruppo = getGroupById(groups, g)
+                var nodiGruppo = getGroupById(groups, coordinateCentro.group)
 
                 // Decidi quanti nodi dovrà avere la catenella che lo circonda.
                 // Il numero di nodi è pari al logaritmo numero di nodi appartenenti al gruppo corrente
@@ -417,7 +416,7 @@ function metodo2(charge, coeffNodi) {
                 console.log(nNodiCatenellaCluster)
 
                 // Definisci il tracciato curvilineo su cui generare i nodi della catenella e disegnalo
-                var pathCircle = definePath(x, y, nNodiCatenellaCluster);
+                var pathCircle = definePath(coordinateCentro.x, coordinateCentro.y, nNodiCatenellaCluster);
                 var circle = svg.append("path")
                     .attr("d", pathCircle)
                     .style("fill", "#f5f5f5")
@@ -428,7 +427,7 @@ function metodo2(charge, coeffNodi) {
                 // Creazione della catenella
                 for (let i = 0; i < nNodiCatenellaCluster; i++) {
                     // Creazione di un nuovo nodo con coordiate iniziali (x,y)=(width/2,height/2).
-                    var nodoCatenella = createNode(String(i) + 'catenella' + String(g), 100, height, width);
+                    var nodoCatenella = createNode(String(i) + 'catenella' + String(coordinateCentro.group), 100, height, width);
 
                     // Calcola la posizione in cui deve essere posizionato tale nodo sul path prefissato 'circle'
                     var coord = circleCoord(circle, nodoCatenella, i, nNodiCatenellaCluster);
@@ -442,10 +441,10 @@ function metodo2(charge, coeffNodi) {
 
                     // Creazione dei link tra nodi
                     if (i > 0) {    // Collaga il nodo corrente al precedente
-                        links.push(...[{ source: String(i - 1) + 'catenella' + String(g), target: String(i) + 'catenella' + String(g) }])
+                        links.push(...[{ source: String(i - 1) + 'catenella' + String(coordinateCentro.group), target: String(i) + 'catenella' + String(coordinateCentro.group) }])
                     }
                     if (i == nNodiCatenellaCluster - 1) {   // Collega il nodo corrente al primo della catena concludendo il cerchio.
-                        links.push(...[{ source: String(i) + 'catenella' + String(g), target: String(0) + 'catenella' + String(g) }])
+                        links.push(...[{ source: String(i) + 'catenella' + String(coordinateCentro.group), target: String(0) + 'catenella' + String(coordinateCentro.group) }])
                     }
                 }
                 // Rimozione del path di guida (non più necessario)
@@ -567,7 +566,7 @@ function metodo2(charge, coeffNodi) {
 
             // Visualizzazione dei nodi invisibili
             show('nodes');
-        }, 3000);
+        }, 1125);
 
         /* 
         #########################
@@ -582,7 +581,7 @@ function metodo2(charge, coeffNodi) {
             console.log(nodes)
             // nodi
             var nodeElements = svg.selectAll(".node").data(nodes, function (d) {
-                return d.id
+                return d.name
             });
 
             if (name == 'center' || name == 'catenelle') {
@@ -594,9 +593,9 @@ function metodo2(charge, coeffNodi) {
                     .attr("r", 8)
                     .attr("fill", function (d) {
                         if (
-                            d.name.includes("center")) return "black"; else return colori_array[d.group-1]
+                            d.name.includes("center")) return "None"; else return colori_array[d.group-1]
                     })
-                    .attr("stroke", function (nodo) { if (nodo.name.includes("center")) return 'black'; else return "black" })
+                    .attr("stroke", function (nodo) { if (nodo.name.includes("center")) return 'None'; else return "black" })
                     .call(
                         d3
                             .drag()
@@ -626,7 +625,7 @@ function metodo2(charge, coeffNodi) {
                 if (name == 'nodes') {
                     nodeElements.enter()
                         .append("circle")
-                        .attr("class", function (d) { return "node " + d.id; })
+                        .attr("class", function (d) { return "node " + d.name; })
                         .attr("r", function (d) {
                             if (d.name.includes("center")) {
                                 return 10;
@@ -635,6 +634,7 @@ function metodo2(charge, coeffNodi) {
                             }
                         })
                         .attr("fill", function (d) { return colori_array[d.group-1] })
+                        .attr("stroke", "black")
                         .attr("cursor", "pointer")
                         .call(
                             d3
@@ -962,11 +962,16 @@ function metodo3(raggio) {
 ====================================
 */
 
-//produce un array di n colori random
+// produce un array di n colori random
 function getArrayColori(n) {
     let arrayColori = [];
     for (let i = 0; i < n; i++) {
-        arrayColori.push('#' + Math.floor(Math.random() * 16777215).toString(16));
+
+        do{
+            cColor = '#' + Math.floor(Math.random() * 16777215).toString(16)
+        } while (arrayColori.includes(cColor) || cColor == ("#" + "000000".toString(16))); // Ripeti se il colore è già presente in lista o se il colore è nero (utilizzato per altri simboli)
+
+        arrayColori.push(cColor);
     }
     return arrayColori;
 }
