@@ -265,16 +265,15 @@ function metodo1() {
               METODO 2
 ====================================
 */
-function metodo2(charge, coeffNodi) {
+function metodo2(coeffNodi) {
     mostraComandi(2);
 
-    //save parameters
-    const K = { 'charge': charge, 'coeffNodi': coeffNodi }
+    // save parameters
+    const K = {'coeffNodi': coeffNodi }
 
 
     function secondoDisegna() {
 
-        var charge = K['charge'];
         var coeffNodi = K['coeffNodi'];
 
         //inizializza d3 svg
@@ -515,7 +514,7 @@ function metodo2(charge, coeffNodi) {
 
             // Visualizzazione dei nodi invisibili
             show('catenelle');
-        }, 1000);
+        }, 500);
 
         /* 
         #########################
@@ -540,7 +539,8 @@ function metodo2(charge, coeffNodi) {
             // Il valore dell'offset è limitato al numero di nodi appartenenti al gruppo.
             var offset = {};
             uniqueClusterName.forEach(function (d) {
-                offset[d] = getIndexGroup(groups, d).values.length;
+                offset[d] = Math.log(getIndexGroup(groups, d).values.length);
+                console.log(offset[d])
             });
 
             console.log(offset)
@@ -560,13 +560,13 @@ function metodo2(charge, coeffNodi) {
             });
 
             // Rimozione dei nodi centrali (non più necessari)
-            nodes = nodes.filter(d => !(d.name.includes('center')));
+            // nodes = nodes.filter(d => !(d.name.includes('center')));
 
             links.push(...linkDaVedere);
 
             // Visualizzazione dei nodi invisibili
             show('nodes');
-        }, 1125);
+        }, 625);
 
         /* 
         #########################
@@ -696,14 +696,6 @@ function metodo2(charge, coeffNodi) {
     }
 
     secondoDisegna();
-
-    d3.select('#charge').on('click', function () {
-        clearSetTimeoutFunction();
-        d3.select("svg").remove();
-        d3.select("#contenitore").append('svg')
-        K['charge'] = this.value;
-        secondoDisegna();
-    })
 
     d3.select('#coeffNodi').on('click', function () {
         clearSetTimeoutFunction();
@@ -986,7 +978,7 @@ function selectMetodo(value) {
             metodo1();
             break;
         case "2":
-            metodo2(-100, 1.1);
+            metodo2( 1.1);
             break;
         case "3":
             metodo3(5);
