@@ -9,3 +9,18 @@ Si suppone di avere in input un grafo clusterizzato flat (non c'è una gerarchia
 * Il cluster potrebbe essere rappresentato da una forma geometrica fissa, per esempio un cerchio che abbia un raggio proporzionale alla dimensione del cluster. I nodi del cluster potrebbero essere vincolati a rimanere all'interno del cerchio rappresentante il cluster dall'algoritmo force directed implementato.
 
 Lo scopo del progetto è quello di confrontare le varie soluzioni e, potenzialmente, di creare una libreria D3.js per il disegno di grafi clusterizzati.
+
+## Avvio della simulazione
+Per poter avviare la simulaizone è necessario configurare un local web server.  
+Python permette di avviarne uno suo tramite il comando:
+```
+python -m SimpleHTTPServer 8888
+```
+se si ha installato la versione Python 2.x oppure il seguente con Python 3.x:
+```
+python3 -m http.server 8888
+```
+Oppure è possibile avviare un local web server tramite Node.js digitando il seguente comando nella directory contenente il progetto:
+```
+http-server
+```
