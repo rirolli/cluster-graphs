@@ -265,6 +265,8 @@ function metodo1() {
               METODO 2
 ====================================
 */
+// aggiungere potenziometri per aumentare le forze intracluster
+// e aggiungere bottone per nascondere le catenelle
 function metodo2(coeffNodi) {
     mostraComandi(2);
 
@@ -301,7 +303,7 @@ function metodo2(coeffNodi) {
                 .strength(.6)
                 .id(d => d.name)
                 .distance(function (d) {
-                    if (d.source.name.includes("center") && d.target.name.includes("center ")) {    // nodi centrali si respingono
+                    if (d.source.name.includes("center") && d.target.name.includes("center")) {    // nodi centrali si respingono
                         return -50;
                     }
                     else {
