@@ -206,7 +206,7 @@ function metodo1() {
         })
         .attr("cursor", "pointer")
         .attr("r", function (nodo) { if (nodo.name.includes("invisibile")) return 10; else return 8 })
-        .attr("fill", function (nodo) { if (nodo.name.includes("invisibile")) return 'red'; else return colori_array[nodo.group-1] })
+        .attr("fill", function (nodo) { if (nodo.name.includes("invisibile")) return 'red'; else return colori_array[nodo.group - 1] })
         .attr("stroke", function (nodo) { if (nodo.name.includes("invisibile")) return 'none'; else return "black" })
         .call(
             //funzione associta al trascinamento del nodo 
@@ -271,7 +271,7 @@ function metodo2(coeffNodi) {
     mostraComandi(2);
 
     // save parameters
-    const K = {'coeffNodi': coeffNodi }
+    const K = { 'coeffNodi': coeffNodi }
 
 
     function secondoDisegna() {
@@ -399,7 +399,7 @@ function metodo2(coeffNodi) {
             // iterazione sui gruppi
             coordinateCentroNodiPosizione.forEach(function (d) {
                 // Memorizzo le coordinate del nodo centrale in un oggetto
-                var coordinateCentro = {'x':d[0], 'y':d[1], 'group':d[2]};
+                var coordinateCentro = { 'x': d[0], 'y': d[1], 'group': d[2] };
 
                 // Ottengo i nodi appartenenti al gruppo corrente
                 var nodiGruppo = getGroupById(groups, coordinateCentro.group)
@@ -524,7 +524,7 @@ function metodo2(coeffNodi) {
                 if (d.name.includes('center'))
                     coordinateCentroNodiPosizione.push({ x: d.x, y: d.y, group: d.group })
             });
-            
+
             // Calcolo della posizione di spawn dei nodi appartenenti al grafo. Tale posizione
             // coincide con quella dei nodi centrali più un offset.
             // Il valore dell'offset è limitato al numero di nodi appartenenti al gruppo.
@@ -575,11 +575,11 @@ function metodo2(coeffNodi) {
                 nodeElements.enter()
                     .append("circle")
                     .attr("class", d => "node " + d.name)
-                    .attr("id", d => d.name)
+                    .attr("id", function (d) { if (d.name.includes('catenella')) { return 'catenella' } else { return d.name } })
                     .attr("r", 8)
                     .attr("fill", function (d) {
                         if (
-                            d.name.includes("center")) return "None"; else return colori_array[d.group-1]
+                            d.name.includes("center")) return "None"; else return colori_array[d.group - 1]
                     })
                     .attr("stroke", function (nodo) { if (nodo.name.includes("center")) return 'None'; else return "black" })
                     .call(
@@ -619,7 +619,7 @@ function metodo2(coeffNodi) {
                                 return 8
                             }
                         })
-                        .attr("fill", function (d) { return colori_array[d.group-1] })
+                        .attr("fill", function (d) { return colori_array[d.group - 1] })
                         .attr("stroke", "black")
                         .attr("cursor", "pointer")
                         .call(
@@ -860,7 +860,7 @@ function metodo3(raggio) {
                     return 8;
                 }
             })
-            .attr("fill", function (nodo) { if (nodo.name.includes("invisibile")) return "rgba(54, 208, 242, 0.2)"; else return colori_array[nodo.group-1] })
+            .attr("fill", function (nodo) { if (nodo.name.includes("invisibile")) return "rgba(54, 208, 242, 0.2)"; else return colori_array[nodo.group - 1] })
             .attr("stroke", "black")
 
             .call(
@@ -945,7 +945,7 @@ function getArrayColori(n) {
     let arrayColori = [];
     for (let i = 0; i < n; i++) {
 
-        do{
+        do {
             cColor = '#' + Math.floor(Math.random() * 16777215).toString(16)
         } while (arrayColori.includes(cColor) || cColor == ("#" + "000000".toString(16))); // Ripeti se il colore è già presente in lista o se il colore è nero (utilizzato per altri simboli)
 
@@ -964,7 +964,7 @@ function selectMetodo(value) {
             metodo1();
             break;
         case "2":
-            metodo2( 1.1);
+            metodo2(1.1);
             break;
         case "3":
             metodo3(5);
@@ -995,6 +995,21 @@ function selectGraph(selectObject) {
 function selectMethod(selectObject) {
     clearSetTimeoutFunction();
     selectMetodo(selectObject.value);
+}
+
+function hideOrShowCatenelle(checkbox) {
+    let cat = d3.selectAll('#catenella')
+
+    if (checkbox.checked) {
+        cat.attr("r", 8)
+            .attr("fill", 'None')
+            .attr("stroke", 'None')
+    }
+    else {
+        cat.attr("r", 8)
+            .attr("fill", 'black')
+            .attr("stroke", "black")
+    }
 }
 
 //funzione di supporto al metodo 1 per mostrare/nascondere i nodi fittizi
