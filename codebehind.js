@@ -41,6 +41,7 @@ function metodo1() {
             unique_cluster_name.push(nodo.group);
     })
 
+    var linkClusterCount = {};
 
     /*
     aggiungi un nodo invisibile a ogni cluster.
@@ -49,20 +50,26 @@ function metodo1() {
     */
     var lista_nodi_invisibili = [];
     unique_cluster_name.forEach(function (nome_cluster) {
+
         //lista di tutti i nodi del claster x 
         var lista_nodi_cluster = [];
 
+        // aggiunta dei nodi invisibili alla lista dei nodi da vedere e alla lista dei nodi invisibili
         nodiDaVedere.push({ "name": "invisibile" + nome_cluster, "group": nome_cluster });
         lista_nodi_invisibili.push("invisibile" + nome_cluster)
 
-
+        //recupero dei nodi appartenenti al cluster corrente
         nodiDaVedere.forEach(function (nodo) {
             if (nodo.group == nome_cluster) {
                 lista_nodi_cluster.push(nodo.name)
             }
         });
 
+        lista_nodi_cluster.forEach(function (nodo) {
 
+        })
+
+        // aggiunta del collegamento tra il nodo invisibile e i nodi del cluster
         lista_nodi_cluster.forEach(function (nodo_cluster) {
             linkDaVedere.push({ "source": "invisibile" + nome_cluster, "target": nodo_cluster, "value": 1 })
         });
@@ -70,13 +77,44 @@ function metodo1() {
     });
 
 
+
+
     //collega tra loro i nodi invisibili.
     for (i = 0; i < lista_nodi_invisibili.length - 1; i++) {
         for (j = 1; j < lista_nodi_invisibili.length; j++) {
-            linkDaVedere.push({ "source": lista_nodi_invisibili[j], "target": lista_nodi_invisibili[i], "value": 0 })
+            if (!(lista_nodi_invisibili[j] == lista_nodi_invisibili[i])) {
+
+                var lista_nodi_cluster_j = [];
+                var lista_nodi_cluster_i = [];
+                let value = 0;
+
+                // recupero dei nodi appartenenti al cluster corrente
+                nodiDaVedere.forEach(function (nodo) {
+                    if (nodo.group == lista_nodi_invisibili[j].slice(-1)) {
+                        lista_nodi_cluster_j.push(nodo.name);
+                    }
+                    if (nodo.group == lista_nodi_invisibili[i].slice(-1)) {
+                        lista_nodi_cluster_i.push(nodo.name);
+                    }
+                });
+
+                linkDaVedere.forEach(function (link) {
+                    if (lista_nodi_cluster_j.includes(link.source) && lista_nodi_cluster_i.includes(link.target)) {
+                        value += 1;
+                    }
+                    else {
+                        if (lista_nodi_cluster_i.includes(link.source) && lista_nodi_cluster_j.includes(link.target)) {
+                            value += 1;
+                        }
+                    }
+                });
+
+                if (!(lista_nodi_invisibili[j] == lista_nodi_invisibili[i])) {
+                    linkDaVedere.push({ "source": lista_nodi_invisibili[j], "target": lista_nodi_invisibili[i], "value": value })
+                }
+            }
         }
     };
-
 
     /*
     imposta la forza attrattiva/repulsiva tra i nodi e nodi fittizi.
@@ -110,8 +148,15 @@ function metodo1() {
             }
             //se i nodi non sono dello stesso gruppo, gli invisibili si respingono; gli altri non si attraggono/respingono
             else {
-                if (link.source.name.includes("invisibile") && link.target.name.includes("invisibile")) {
-                    return 600;
+                if (link.source.name.includes("invisibile") && link.target.name.includes("invisibile")) {   // questo
+                    if (link.source.name != link.target.name) {
+                        if (link.value != 0){
+                            return 600/link.value;
+                        }
+                        else {
+                            return 600;
+                        }
+                    }
                 }
                 else {
                     return 0;
@@ -244,7 +289,12 @@ function metodo1() {
         const valore = this.value;
         distanceForceLink.distance(function (link) {
             if (link.source.name.includes("invisibile") && link.target.name.includes("invisibile")) {
-                return valore;
+                if (link.value != 0) {
+                    return valore/link.value;
+                }
+                else {
+                    return valore;
+                }
             }
             else {
                 if ((link.source.name.includes("invisibile") || link.target.name.includes("invisibile")) && link.source.group == link.target.group) {
@@ -328,7 +378,7 @@ function metodo2(coeffNodi) {
                         }
                         else {
                             if (d.source.group == d.target.group) { // nodi dello stesso gruppo
-                                return 0
+                                return -0.01;
                             }
                             else {  // tutti gli altri
                                 return 0;
@@ -445,10 +495,10 @@ function metodo2(coeffNodi) {
             });
 
             // I nodi appartenenti a delle catenelle si respingono tra loro
-            charge.strength(function (d) {
-                if (d.name.includes("catenella"))
-                    return -50;
-            });
+            // charge.strength(function (d) {
+            //     if (d.name.includes("catenella"))
+            //         return -50;
+            // });
 
             // Aggiornamento delle forze della simulazione
             simulation
@@ -458,16 +508,17 @@ function metodo2(coeffNodi) {
                     .distance(function (link) {
                         // se i nodi sono dello stesso gruppo, il nodo centrale attrae gli altri nodi; gli altri non si attraggono/respingono.
                         if (link.source.group == link.target.group) {
-                            if ((!link.source.name.includes("center")) && (!link.target.name.includes("center"))) { // link tra nodi non centrali (non interagiscono)
-                                return 0;
+                            if ((link.source.name.includes("catenella")) && (link.target.name.includes("catenella"))) {
+                                return -50;
                             }
-                            else {
-                                if ((link.source.name.includes("center")) && (!link.target.name.includes("center"))) {  // link tra un nodo centrale e un nodo non centrale
-                                    return -50;
+                            else {  // tutti gli altri collegamenti
+                                if ((link.source.name.includes("center")) || (link.target.name.includes("center"))) {
+                                    return 500;
                                 }
-                                else {  // tutti gli altri collegamenti
+                                else {
                                     return 0;
                                 }
+
                             }
                         }
                         //se i nodi non sono dello stesso gruppo, gli invisibili si respingono; gli altri non si attraggono/respingono
@@ -482,24 +533,39 @@ function metodo2(coeffNodi) {
                     })
                     .strength(function (d) {
                         if (d.source.name.includes("center") && d.target.name.includes("center")) { // tra nodi centrali
-                            return 0.2;
+                            return -0.2;
                         }
                         else {
                             if ((d.source.name.includes("center") || d.target.name.includes("center")) && d.source.group == d.target.group) {   // tra un nodo centrale e uno dello stesso gruppo
-                                return 0.6;
+                                return 0.2;
                             }
                             else {
                                 if ((d.source.group == d.target.group) && (d.source.name.includes('catenella'))) {  // tra un nodo della catenella e uno appartenente allo stesso gruppo
                                     return 1;
                                 }
                                 else {  // tutti gli altri
-                                    return 0;
+                                    if (d.source.group == d.target.group) { // nodi dello stesso gruppo
+                                        return -0.015;
+                                    }
+                                    else {
+                                        return -0.015;
+                                    }
                                 }
                             }
                         }
                     }))
 
-                .force("charge", charge)
+                .force("charge", d3.force("charge", d3
+                    .forceManyBody()
+                    .strength(function (d) {
+                        console.log(d)
+                        if (d.name.includes("catenella")) {
+                            return 1;
+                        }
+                        else {
+                            return -.02;
+                        }
+                    })))
                 .force('collision', d3.forceCollide().radius(function (d) { if (d.name.includes("catenella")) return 8; else return 10; }))
                 .on("tick", ticked);
 
