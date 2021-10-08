@@ -265,14 +265,460 @@ function metodo1() {
               METODO 2
 ====================================
 */
+// // aggiungere potenziometri per aumentare le forze intracluster
+// // e aggiungere bottone per nascondere le catenelle
+// function metodo2(coeffNodi) {
+//     mostraComandi(2);
+
+//     // save parameters
+//     const K = { 'coeffNodi': coeffNodi }
+
+
+//     function secondoDisegna() {
+
+//         var coeffNodi = K['coeffNodi'];
+
+//         //inizializza d3 svg
+//         var w = window.innerWidth - 200;
+//         var h = window.innerHeight - 50;
+//         var svg = d3.select("svg").attr("width", w).attr("height", h);
+//         var width = svg.attr("width");
+//         var height = svg.attr("height");
+
+
+//         //effettua una copia di lavoro del grafo 
+//         var nodiDaVedere = [...graph.nodes];
+//         var linkDaVedere = [...graph.links];
+
+//         //liste di supporto dei nodi e dei link 
+//         var nodes = [];
+//         var links = [];
+
+//         var charge = d3.forceManyBody()
+
+//         // inizializzo la simulazione
+//         simulation = d3.forceSimulation()
+//             .force("link", d3.forceLink()
+//                 .distance(200)
+//                 .strength(.6)
+//                 .id(d => d.name)
+//                 .distance(function (d) {
+//                     if (d.source.name.includes("center") && d.target.name.includes("center")) {    // nodi centrali si respingono
+//                         return -50;
+//                     }
+//                     else {
+//                         if ((d.source.name.includes("center") || d.target.name.includes("center")) && d.source.group == d.target.group) {   // nodi centrali e nodi che appartengono allo stesso gruppo
+//                             return 20;
+//                         } else {
+//                             if (d.source.group == d.target.group) { // nodi dello stesso gruppo
+//                                 return 0;
+//                             }
+//                             else {  // tutti gli altri
+//                                 return 0;
+//                             }
+//                         }
+//                     }
+//                 }).strength(function (d) {
+//                     if (d.source.name.includes("center") && d.target.name.includes("center")) { // nodi centrali si respingono
+//                         return 1;
+//                     }
+//                     else {
+//                         if ((d.source.name.includes("center") || d.target.name.includes("center")) && d.source.group == d.target.group) {   // nodi centrali e nodi che appartengono allo stesso gruppo
+//                             return 0;
+//                         }
+//                         else {
+//                             if (d.source.group == d.target.group) { // nodi dello stesso gruppo
+//                                 return 0
+//                             }
+//                             else {  // tutti gli altri
+//                                 return 0;
+//                             }
+//                         }
+//                     }
+//                 }))
+//             .force("charge", charge)
+//             .force("x", d3.forceX(width / 2))
+//             .force("y", d3.forceY(height / 2))
+//             .force('collision', d3.forceCollide().radius(function (d) {
+//                 if (d.name.includes("center"))
+//                     return 200;
+//                 else
+//                     return 40;
+//             })).on("tick", ticked);
+
+//         /* 
+//         #########################
+//         CREAZIONE NODI INVISIBILI
+//         ######################### 
+//         */
+
+//         // creo una lista dei cluster presenti nel nostro dataset
+//         var uniqueClusterName = [];
+//         nodiDaVedere.forEach(function (nodo) {
+//             if (!uniqueClusterName.includes(nodo.group))
+//                 uniqueClusterName.push(nodo.group);
+//         });
+
+//         // sapendo quanti cluster ho a disposizione posso creare la gamma
+//         // di colori da utilizzare per la rappresentazione
+//         var colori_array = getArrayColori(uniqueClusterName.length);
+
+//         // creo un nodo invisibile per ogni cluster
+//         // tale nodo sarà il nodo centrale per la creazione di ogni cluster.
+//         // A questo punto del codice la variabile "nodes" è una lista di nodi
+//         // che contiene solo i nodi invisibili;
+//         // ogni nodo ha un 'nome', appartiene a un 'group'
+//         // ed ha coordinate iniziali (x,y)=(width/2,height/2).
+//         var nodes = uniqueClusterName.map(function (d) {
+//             return createNode('center' + d, d, height, width);
+//         });
+
+//         // Visualizzazione dei nodi invisibili
+//         show('center');
+
+//         /* 
+//         #########################
+//         CREAZIONE CATENELLE
+//         ######################### 
+//         */
+
+//         // creo una lista che divide i nodi del grafo in gruppi secondo il cluster di appartenenza
+//         var groups = Array.from(d3.group(nodiDaVedere, d => d.group), ([key, values]) => ({ key, values }))
+
+//         // aggiungo un ritardo temporale così da permettere che le azioni
+//         // precedenti abbiano il tempo di finire la loro esecuzione.
+//         showCatenelle = setTimeout(function () {
+
+//             // ottengo la posizione del centro per ogni cluster. Tale posizione è data
+//             // dalla posizione corrente occupata dal nodo "center" di ogni gruppo.
+//             // [centro_cluster_x, centro_cluster_y, id_cluster]
+//             var coordinateCentroNodiPosizione = simulation.nodes().map(function (d) {
+//                 return [d.x, d.y, d.group];
+//             });
+
+//             // iterazione sui gruppi
+//             coordinateCentroNodiPosizione.forEach(function (d) {
+//                 // Memorizzo le coordinate del nodo centrale in un oggetto
+//                 var coordinateCentro = { 'x': d[0], 'y': d[1], 'group': d[2] };
+
+//                 // Ottengo i nodi appartenenti al gruppo corrente
+//                 var nodiGruppo = getGroupById(groups, coordinateCentro.group)
+
+//                 // Decidi quanti nodi dovrà avere la catenella che lo circonda.
+//                 // Il numero di nodi è pari al logaritmo numero di nodi appartenenti al gruppo corrente
+//                 // per una costante per il coefficiente di numero di nodi deciso dall'utente tramite l'interfaccia.
+//                 var nNodiCatenellaCluster = Math.floor(Math.log(nodiGruppo.values.length) * 25 * coeffNodi);
+
+//                 // Definisci il tracciato curvilineo su cui generare i nodi della catenella e disegnalo
+//                 var pathCircle = definePath(coordinateCentro.x, coordinateCentro.y, nNodiCatenellaCluster);
+//                 var circle = svg.append("path")
+//                     .attr("d", pathCircle)
+//                     .style("fill", "#f5f5f5")
+//                     .style("opacity", 0.5);
+
+//                 // Creazione della catenella
+//                 for (let i = 0; i < nNodiCatenellaCluster; i++) {
+//                     // Creazione di un nuovo nodo con coordiate iniziali (x,y)=(width/2,height/2).
+//                     var nodoCatenella = createNode(String(i) + 'catenella' + String(coordinateCentro.group), 100, height, width);
+
+//                     // Calcola la posizione in cui deve essere posizionato tale nodo sul path prefissato 'circle'
+//                     var coord = circleCoord(circle, nodoCatenella, i, nNodiCatenellaCluster);
+
+//                     // Aggiorno la posizione del nodo della catenella con le coordinate calcolate
+//                     nodoCatenella.x = coord.x;
+//                     nodoCatenella.y = coord.y;
+
+//                     // Aggiungo il nuovo nodo nella lista dei nodi da rappresentare
+//                     nodes.push(...[nodoCatenella]);
+
+//                     // Creazione dei link tra nodi
+//                     if (i > 0) {    // Collaga il nodo corrente al precedente
+//                         links.push(...[{ source: String(i - 1) + 'catenella' + String(coordinateCentro.group), target: String(i) + 'catenella' + String(coordinateCentro.group) }])
+//                     }
+//                     if (i == nNodiCatenellaCluster - 1) {   // Collega il nodo corrente al primo della catena concludendo il cerchio.
+//                         links.push(...[{ source: String(i) + 'catenella' + String(coordinateCentro.group), target: String(0) + 'catenella' + String(coordinateCentro.group) }])
+//                     }
+//                 }
+//                 // Rimozione del path di guida (non più necessario)
+//                 circle.remove();
+
+//             });
+
+//             // I nodi appartenenti a delle catenelle si respingono tra loro
+//             charge.strength(function (d) {
+//                 if (d.name.includes("catenella"))
+//                     return -50;
+//             });
+
+//             let collisionNode = d3.forceCollide().radius(function (nodo) {
+//                 if (nodo.name.includes("catenella"))
+//                     return 8;
+//                 else
+//                     return 10;
+//             })
+
+//             // Aggiornamento delle forze della simulazione
+//             simulation
+//                 .force("link", d3
+//                     .forceLink()
+//                     .id(function (d) { return d.name; })
+//                     .distance(function (link) {
+//                         // se i nodi sono dello stesso gruppo, il nodo centrale attrae gli altri nodi; gli altri non si attraggono/respingono.
+//                         if (link.source.group == link.target.group) {
+//                             if ((!link.source.name.includes("center")) && (!link.target.name.includes("center"))) { // link tra nodi non centrali (non interagiscono)
+//                                 return 0;
+//                             }
+//                             else {
+//                                 if ((link.source.name.includes("center")) && (!link.target.name.includes("center"))) {  // link tra un nodo centrale e un nodo non centrale
+//                                     return -50;
+//                                 }
+//                                 else {  // tutti gli altri collegamenti
+//                                     return 0;
+//                                 }
+//                             }
+//                         }
+//                         //se i nodi non sono dello stesso gruppo, gli invisibili si respingono; gli altri non si attraggono/respingono
+//                         else {
+//                             if (link.source.name.includes("center") && link.target.name.includes("center")) {   // link tra nodi centrali
+//                                 return 600;
+//                             }
+//                             else {  // tra tutti gli altri collegamenti
+//                                 return 0;
+//                             }
+//                         }
+//                     })
+//                     .strength(function (d) {
+//                         if (d.source.name.includes("center") && d.target.name.includes("center")) { // tra nodi centrali
+//                             return 0.2;
+//                         }
+//                         else {
+//                             if ((d.source.name.includes("center") || d.target.name.includes("center")) && d.source.group == d.target.group) {   // tra un nodo centrale e uno dello stesso gruppo
+//                                 return 0.6;
+//                             }
+//                             else {
+//                                 if ((d.source.group == d.target.group) && (d.source.name.includes('catenella'))) {  // tra un nodo della catenella e uno appartenente allo stesso gruppo
+//                                     return 1;
+//                                 }
+//                                 else {  // tutti gli altri
+//                                     return 0;
+//                                 }
+//                             }
+//                         }
+//                     }))
+
+//                 .force("charge", charge)
+//                 .force('collision', collisionNode)
+//                 .on("tick", ticked);
+
+//             // Visualizzazione dei nodi invisibili
+//             show('catenelle');
+//         }, 500);
+
+//         /* 
+//         #########################
+//         VISUALIZZAZIONE DEL GRAFO
+//         ######################### 
+//         */
+
+//         // aggiungo un ritardo temporale così da permettere che le azioni
+//         // precedenti abbiano il tempo di finire la loro esecuzione.
+//         showCatenelle = setTimeout(function () {
+
+//             // Calcolare nuovamente la posizione dei nodi centrali (nel caso si fossero
+//             // spostati rispetto allo step precedente)
+//             coordinateCentroNodiPosizione = [];
+//             simulation.nodes().forEach(function (d) {
+//                 if (d.name.includes('center'))
+//                     coordinateCentroNodiPosizione.push({ x: d.x, y: d.y, group: d.group })
+//             });
+
+//             // Calcolo della posizione di spawn dei nodi appartenenti al grafo. Tale posizione
+//             // coincide con quella dei nodi centrali più un offset.
+//             // Il valore dell'offset è limitato al numero di nodi appartenenti al gruppo.
+//             var offset = {};
+//             uniqueClusterName.forEach(function (d) {
+//                 offset[d] = Math.log(getIndexGroup(groups, d).values.length);
+//             });
+
+//             nodiDaVedere.forEach(function (d) {
+//                 // Acquisisco il centro del gruppo (ovvero dove scoppierà il cluster di nodi)
+//                 // il centro coincide con la posizione del nodo invisibile centrale
+//                 const centro = getCenterByGroup(d.group, coordinateCentroNodiPosizione);
+
+//                 // Aggiorno le coordiare del nodo con quelle centrali + un offset (utile per evitare che
+//                 // i nodi appena creati vengano sparati in giro per lo spazio)
+//                 d.x = centro.x + (Math.random() * offset[d.group]);
+//                 d.y = centro.y + (Math.random() * offset[d.group]);
+
+//                 // Aggiungo il nodo alla lista dei nodi da visualizzare
+//                 nodes.push(d);
+//             });
+
+//             // Rimozione dei nodi centrali (non più necessari)
+//             // nodes = nodes.filter(d => !(d.name.includes('center')));
+
+//             links.push(...linkDaVedere);
+
+//             // Visualizzazione dei nodi invisibili
+//             show('nodes');
+//         }, 625);
+
+//         /* 
+//         #########################
+//         FUNZIONI DI VISUALIZZAZIONE
+//         ######################### 
+//         */
+
+//         // La funzione 'show' ha il compito di riavviare la simulazione ogni volta che dei nuovi
+//         // nodi vengono aggiunti.
+//         function show(name) {
+//             // nodi
+//             var nodeElements = svg.selectAll(".node").data(nodes, function (d) {
+//                 return d.name
+//             });
+
+//             if (name == 'center' || name == 'catenelle') {  // creazione di nodi centrali e catenelle
+//                 // enter() dei nodi
+//                 nodeElements.enter()
+//                     .append("circle")
+//                     .attr("class", d => "node " + d.name)
+//                     .attr("id", d => d.name)
+//                     .attr("r", 8)
+//                     .attr("fill", function (d) {
+//                         if (
+//                             d.name.includes("center")) return "None"; else return colori_array[d.group - 1]
+//                     })
+//                     .attr("stroke", function (nodo) { if (nodo.name.includes("center")) return 'None'; else return "black" })
+//                     .call(
+//                         d3
+//                             .drag()
+//                             .on("start", dragstarted)
+//                             .on("drag", dragged)
+//                             .on("end", dragended)
+//                     );
+
+//                 // exit() dei nodi
+//                 nodeElements.exit().remove();
+
+//                 // collegamenti
+//                 var linkElements = svg.selectAll(".link").data(links);
+
+//                 // enter() dei collegamenti
+//                 linkElements.enter().insert("line", ".node").attr("class", "link");
+
+//                 // exit() dei collegamenti
+//                 linkElements.exit().remove();
+
+//                 // riavvio della simulazione con aggiornamento dei nodes e dei links.
+//                 simulation.nodes(nodes)
+//                 simulation.force("link").links(links)
+//                 simulation.restart();
+//             }
+//             else {
+//                 if (name == 'nodes') {  // creazione dei nodi del grafo
+//                     nodeElements.enter()
+//                         .append("circle")
+//                         .attr("class", function (d) { return "node " + d.name + d.group; })
+//                         .attr("r", function (d) {
+//                             if (d.name.includes("center")) {
+//                                 return 10;
+//                             } else {
+//                                 return 8
+//                             }
+//                         })
+//                         .attr("fill", function (d) { return colori_array[d.group - 1] })
+//                         .attr("stroke", "black")
+//                         .attr("cursor", "pointer")
+//                         .call(
+//                             d3
+//                                 .drag()
+//                                 .on("start", dragstarted)
+//                                 .on("drag", dragged)
+//                                 .on("end", dragended)
+//                         );
+
+//                     // exit() dei nodi
+//                     nodeElements.exit().remove();
+
+//                     // collegamenti
+//                     var linkElements = svg.selectAll(".link").data(links);
+
+//                     // enter() dei collegamenti
+//                     linkElements.enter().insert("line", ".node").attr("class", "link");
+
+//                     // exit() dei collegamenti
+//                     linkElements.exit().remove();
+
+//                     // riavvio della simulazione con aggiornamento dei nodes e dei links.
+//                     simulation.nodes(nodes)
+//                     simulation.force("link").links(links)
+//                     simulation.restart();
+//                 }
+//                 else {  // errore
+//                     throw "Parameter 'name' is not defined."
+//                 }
+//             }
+//         }
+
+//         // funzione che gestisce gli aggiornamenti della simulazione ad ogni tick
+//         function ticked() {
+
+//             var nodeElements = svg.selectAll(".node");
+//             var linkElements = svg.selectAll(".link");
+
+//             //se il nodo è fuori dalla tela, inseriscilo in una posizione valida della tela
+//             nodeElements.attr("cx", function (d) {
+//                 if (d.name.includes("catenella")) {
+//                     return d.x
+//                 }
+//                 return d.x = Math.max(50, Math.min(width - 50, d.x));
+//             })
+//                 .attr("cy", function (d) {
+//                     if (d.name.includes("catenella")) {
+//                         return d.y
+//                     }
+//                     return d.y = Math.max(50, Math.min(height - 50, d.y));
+//                 });
+
+//             linkElements.attr("x1", function (d) { return d.source.x; })
+//                 .attr("y1", function (d) { return d.source.y; })
+//                 .attr("x2", function (d) { return d.target.x; })
+//                 .attr("y2", function (d) { return d.target.y; });
+
+//         }
+//     }
+
+//     secondoDisegna();
+
+//     d3.select('#coeffNodi').on('click', function () {
+//         clearSetTimeoutFunction();
+//         d3.select("svg").remove();
+//         d3.select("#contenitore").append('svg')
+//         K['coeffNodi'] = this.value;
+//         secondoDisegna();
+//     });
+
+//     //evento associato al cambio della forza di collisione tra i nodi
+//     d3.select('#collision').on('click', function () {
+//         console.log(this.value)
+//         collisionNode.radius(this.value)
+//         simulation.alpha(0.5).restart();
+//     });
+// }
 // aggiungere potenziometri per aumentare le forze intracluster
 // e aggiungere bottone per nascondere le catenelle
-function metodo2(coeffNodi) {
+function metodo2(coeffNodi, coeffDist, coeffHide) {
     mostraComandi(2);
 
     // save parameters
-    const K = { 'coeffNodi': coeffNodi }
+    const K = { 'coeffNodi': coeffNodi, 'coeffDist': coeffDist, 'coeffHide': coeffHide }
 
+    let collisionNode = d3.forceCollide().radius(function (nodo) {
+        if (nodo.name.includes("catenella"))
+            return 8;
+        else
+            return K.coeffDist;
+    });
 
     function secondoDisegna() {
 
@@ -500,7 +946,7 @@ function metodo2(coeffNodi) {
                     }))
 
                 .force("charge", charge)
-                .force('collision', d3.forceCollide().radius(function (d) { if (d.name.includes("catenella")) return 8; else return 10; }))
+                .force('collision', collisionNode)
                 .on("tick", ticked);
 
             // Visualizzazione dei nodi invisibili
@@ -578,10 +1024,31 @@ function metodo2(coeffNodi) {
                     .attr("id", function (d) { if (d.name.includes('catenella')) { return 'catenella' } else { return d.name } })
                     .attr("r", 8)
                     .attr("fill", function (d) {
-                        if (
-                            d.name.includes("center")) return "None"; else return colori_array[d.group - 1]
+                        if (d.name.includes("center")) {
+                            return "None";
+                        } else {
+                            if (K['coeffHide']) {
+                                return 'None';
+                            }
+                            else {
+                                return colori_array[d.group - 1]
+                            }
+                        }
                     })
-                    .attr("stroke", function (nodo) { if (nodo.name.includes("center")) return 'None'; else return "black" })
+                    .attr("stroke", function (nodo) {
+                        if (nodo.name.includes("center")) {
+                            return 'None';
+                        }
+                        else {
+                            if (K['coeffHide']) {
+                                return 'None'
+                            }
+                            else {
+                                return "black"
+                            }
+                        }
+
+                    })
                     .call(
                         d3
                             .drag()
@@ -688,11 +1155,28 @@ function metodo2(coeffNodi) {
         d3.select("svg").remove();
         d3.select("#contenitore").append('svg')
         K['coeffNodi'] = this.value;
+        console.log(document.getElementById('checkboxHide').checked)
+        K['coeffHide'] = document.getElementById('checkboxHide').checked;
         secondoDisegna();
     })
+
+    //evento associato al cambio della forza di collisione tra i nodi
+    d3.select('#collision2').on('click', function () {
+        let prova = this.value
+        console.log(this.value)
+
+        simulation.force('collision', d3
+            .forceCollide().radius(function (d) {
+                if (d.name.includes("catenella"))
+                    return 8;
+                else {
+                    console.log(prova)
+                    return prova;
+                }
+            })).alpha(0.5).restart();
+    });
+
 }
-
-
 
 /*
 ====================================
@@ -964,7 +1448,7 @@ function selectMetodo(value) {
             metodo1();
             break;
         case "2":
-            metodo2(1.1);
+            metodo2(1.1, 10, false);
             break;
         case "3":
             metodo3(5);
@@ -1011,6 +1495,8 @@ function hideOrShowCatenelle(checkbox) {
             .attr("stroke", "black")
     }
 }
+
+
 
 //funzione di supporto al metodo 1 per mostrare/nascondere i nodi fittizi
 function hideOrShowInvisibleNode(checkbox) {
