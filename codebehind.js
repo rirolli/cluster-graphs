@@ -77,8 +77,6 @@ function metodo1() {
     });
 
 
-
-
     //collega tra loro i nodi invisibili.
     for (i = 0; i < lista_nodi_invisibili.length - 1; i++) {
         for (j = 1; j < lista_nodi_invisibili.length; j++) {
@@ -150,8 +148,8 @@ function metodo1() {
             else {
                 if (link.source.name.includes("invisibile") && link.target.name.includes("invisibile")) {   // questo
                     if (link.source.name != link.target.name) {
-                        if (link.value != 0){
-                            return 600/link.value;
+                        if (link.value != 0) {
+                            return 600 / link.value;
                         }
                         else {
                             return 600;
@@ -290,7 +288,7 @@ function metodo1() {
         distanceForceLink.distance(function (link) {
             if (link.source.name.includes("invisibile") && link.target.name.includes("invisibile")) {
                 if (link.value != 0) {
-                    return valore/link.value;
+                    return valore / link.value;
                 }
                 else {
                     return valore;
@@ -796,23 +794,49 @@ function metodo3(raggio) {
         var groups = Array.from(d3.group(nodiDaVedere, d => d.group), ([key, values]) => ({ key, values }))
 
 
-        const invisibleNode = [];
+        var invisibleNode = [];
         //crea una lista di nodi invisibili e li aggiunge in testa a nodiDaVedere
         unique_cluster_name.forEach(function (nome_cluster) {
-            const nameInvisibleNode = "invisibile" + nome_cluster;
+            let nameInvisibleNode = "invisibile" + nome_cluster;
             invisibleNode.push(nameInvisibleNode)
             nodiDaVedere.unshift({ "name": nameInvisibleNode, "group": nome_cluster });
         });
 
-
         //collega tutti i nodi invisibili tra di loro
-        invisibleNode.forEach(function (nodoj) {
-            invisibleNode.forEach(function (nodoi) {
-                if (nodoi != nodoj) {
-                    linkDaVedere.push({ "source": nodoi, "target": nodoj, "value": 0 });
+        for (i = 0; i < invisibleNode.length - 1; i++) {
+            for (j = 1; j < invisibleNode.length; j++) {
+
+                var lista_nodi_cluster_j = [];
+                var lista_nodi_cluster_i = [];
+                let value = 0;
+
+                // recupero dei nodi appartenenti al cluster corrente
+                nodiDaVedere.forEach(function (nodo) {
+                    if (nodo.group == invisibleNode[j].slice(-1)) {
+                        lista_nodi_cluster_j.push(nodo.name);
+                    }
+                    if (nodo.group == invisibleNode[i].slice(-1)) {
+                        lista_nodi_cluster_i.push(nodo.name);
+                    }
+                });
+
+                linkDaVedere.forEach(function (link) {
+                    if ((lista_nodi_cluster_j.includes(link.source.name) && lista_nodi_cluster_i.includes(link.target.name)) || (lista_nodi_cluster_j.includes(link.source) && lista_nodi_cluster_i.includes(link.target))) {
+                        value += 1;
+                    }
+                    else {
+                        if ((lista_nodi_cluster_i.includes(link.source.name) && lista_nodi_cluster_j.includes(link.target.name)) || (lista_nodi_cluster_i.includes(link.source) && lista_nodi_cluster_j.includes(link.target))) {
+                            value += 1;
+                        }
+                    }
+                });
+
+                if (invisibleNode[j] != invisibleNode[i]) {
+                    let newLink = { "source": invisibleNode[j], "target": invisibleNode[i], "value": value }
+                    linkDaVedere.push(newLink);
                 }
-            })
-        })
+            }
+        }
 
 
 
@@ -849,7 +873,16 @@ function metodo3(raggio) {
                         //se i nodi non sono dello stesso gruppo, gli invisibili si respingono; gli altri non si attraggono/respingono
                         else {
                             if (link.source.name.includes("invisibile") && link.target.name.includes("invisibile")) {
-                                return 600;
+                                if (link.source.name != link.target.name) {
+                                    if (link.value != 0) {
+                                        console.log(link.source.name + ": " + raggioGroup(link.source.group))
+                                        console.log(link.target.name + ": " + raggioGroup(link.target.group))
+                                        return (600 / link.value) + (2*raggioGroup(link.source.group)) + (2*raggioGroup(link.target.group));
+                                    }
+                                    else {
+                                        return 600;
+                                    }
+                                }
                             }
                             else {
                                 return 0;
@@ -918,6 +951,7 @@ function metodo3(raggio) {
             .data(nodiDaVedere)
             .enter()
             .append("circle")
+            .attr("class", d => d.name)
             .attr("cursor", function (nodo) { if (nodo.name.includes("invisibile")) return "auto"; else return "pointer"; })
             .attr("r", function (nodo) {
                 if (nodo.name.includes("invisibile")) {
