@@ -999,23 +999,8 @@ function metodo2(coeffNodi, coeffDist, coeffHide) {
                         }
                     }))
 
-<<<<<<< HEAD
-                .force("charge", d3.force("charge", d3
-                    .forceManyBody()
-                    .strength(function (d) {
-                        console.log(d)
-                        if (d.name.includes("catenella")) {
-                            return 1;
-                        }
-                        else {
-                            return -.02;
-                        }
-                    })))
-                .force('collision', d3.forceCollide().radius(function (d) { if (d.name.includes("catenella")) return 8; else return 10; }))
-=======
                 .force("charge", charge)
                 .force('collision', collisionNode)
->>>>>>> aggiunte_job2
                 .on("tick", ticked);
 
             // Visualizzazione dei nodi invisibili
