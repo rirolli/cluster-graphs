@@ -315,11 +315,11 @@ function metodo1() {
 */
 // // aggiungere potenziometri per aumentare le forze intracluster
 // // e aggiungere bottone per nascondere le catenelle
-function metodo2(coeffNodi, coeffDist, coeffHide) {
+function metodo2(coeffNodi, coeffDist) {
     mostraComandi(2);
 
     // save parameters
-    const K = { 'coeffNodi': coeffNodi, 'coeffDist': coeffDist, 'coeffHide': coeffHide }
+    const K = { 'coeffNodi': coeffNodi, 'coeffDist': coeffDist, 'coeffHide': document.getElementById('checkboxHide').checked }
 
     let collisionNode = d3.forceCollide().radius(function (nodo) {
         if (nodo.name.includes("catenella"))
@@ -331,6 +331,7 @@ function metodo2(coeffNodi, coeffDist, coeffHide) {
     function secondoDisegna() {
 
         var coeffNodi = K['coeffNodi'];
+        document.getElementById('collision2').value = K['coeffDist'] // resetta il valore della barra di input sull'html
 
         //inizializza d3 svg
         var w = window.innerWidth - 200;
