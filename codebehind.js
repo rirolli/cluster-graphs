@@ -23,6 +23,12 @@ var graph3 = { 'nodes': 'a', 'links': 'b' };
 function metodo1() {
     mostraComandi(1);
 
+    const startCollision = 20;
+    const startDistance = 600;
+
+    document.getElementById('distance').value = startDistance;      // resetta il valore della barra di input sull'html
+    document.getElementById('collision').value = startCollision;    // resetta il valore della barra di input sull'html
+
     //inizializza d3 svg
     var w = window.innerWidth - 200;
     var h = window.innerHeight - 50;
@@ -123,7 +129,7 @@ function metodo1() {
         if (nodo.name.includes("invisibile"))
             return 0;
         else
-            return 20;
+            return startCollision;
     })
 
     let distanceForceLink = d3.forceLink().id(function (link) {
@@ -149,10 +155,10 @@ function metodo1() {
                 if (link.source.name.includes("invisibile") && link.target.name.includes("invisibile")) {   // questo
                     if (link.source.name != link.target.name) {
                         if (link.value != 0) {
-                            return 600 / link.value;
+                            return startDistance / link.value;
                         }
                         else {
-                            return 600;
+                            return startDistance;
                         }
                     }
                 }
@@ -331,7 +337,8 @@ function metodo2(coeffNodi, coeffDist) {
     function secondoDisegna() {
 
         var coeffNodi = K['coeffNodi'];
-        document.getElementById('collision2').value = K['coeffDist'] // resetta il valore della barra di input sull'html
+        document.getElementById('collision2').value = K['coeffDist']    // resetta il valore della barra di input sull'html
+        document.getElementById('coeffNodi').value = K['coeffNodi']     // resetta il valore della barra di input sull'html
 
         //inizializza d3 svg
         var w = window.innerWidth - 200;
@@ -797,6 +804,8 @@ function metodo3(raggio) {
 
 
     function terzoDisegna(raggio) {
+
+        document.getElementById('raggio').value = raggio    // resetta il valore della barra di input sull'html
 
         //effettua una copia di lavoro del grafo 
         var nodiDaVedere = [...graph.nodes];
