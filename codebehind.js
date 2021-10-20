@@ -102,6 +102,7 @@ function metodo1() {
                     }
                 });
 
+                // conteggio del numero di nodi collegati tra il cluster i e il cluster j
                 linkDaVedere.forEach(function (link) {
                     if (lista_nodi_cluster_j.includes(link.source) && lista_nodi_cluster_i.includes(link.target)) {
                         value += 1;
@@ -858,6 +859,7 @@ function metodo3(raggio) {
                     }
                 });
 
+                // conteggio dei nodi collegati tra il cluster i e il cluster j
                 linkDaVedere.forEach(function (link) {
                     if ((lista_nodi_cluster_j.includes(link.source.name) && lista_nodi_cluster_i.includes(link.target.name)) || (lista_nodi_cluster_j.includes(link.source) && lista_nodi_cluster_i.includes(link.target))) {
                         value += 1;
